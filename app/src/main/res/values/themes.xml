@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.BrochureCraft" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:statusBarColor">#F9F9FF</item>
+        <item name="android:windowBackground">#F9F9FF</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>
