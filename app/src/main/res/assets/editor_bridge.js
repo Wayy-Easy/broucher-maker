@@ -17,12 +17,17 @@
         selectionOverlay.style.zIndex = '999999';
         selectionOverlay.style.display = 'none';
         selectionOverlay.style.borderRadius = '2px';
-        selectionOverlay.style.boxShadow = '0 0 0 9999px rgba(0,0,0,0.05)';
+        selectionOverlay.style.boxShadow = '0 0 0 9999px rgba(0,0,0,0.1)';
         document.body.appendChild(selectionOverlay);
     }
 
     function handleElementClick(e) {
-        // Prevent default only if we are in editor mode
+        // If we are clicking a text element that is already selected and focused,
+        // let the event pass through to allow caret movement/typing.
+        if (selectedElement && selectedElement === e.target && selectedElement.contentEditable === "true") {
+            return;
+        }
+
         e.preventDefault();
         e.stopPropagation();
 
@@ -73,7 +78,19 @@
         // Enable inline editing for text nodes
         if (isTextNode(el)) {
             el.contentEditable = "true";
-            el.focus();
+            // Prevent Enter from creating divs
+            el.onkeydown = function(e) {
+                if (e.key === 'Enter') {
+                    document.execCommand('insertLineBreak');
+                    return false;
+                }
+            };
+            el.oninput = function() {
+                updateSelectionOverlay();
+                if (window.AndroidBridge) {
+                    window.AndroidBridge.onContentChanged(EditorApi.getHtml());
+                }
+            };
         }
     }
 

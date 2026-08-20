@@ -172,6 +172,10 @@ class EditorViewModel(
     }
 
     fun addImageElement(uri: String) {
+        if (isHtmlMode) {
+            setHtmlImage(uri)
+            return
+        }
         pushUndo()
         val newEl = DesignElement(
             id = UUID.randomUUID().toString(),

@@ -191,7 +191,10 @@ fun DesignEditorScreen(
                 propertiesJson = vm.selectedHtmlElementJson!!,
                 onStyleChange = vm::updateHtmlStyle,
                 onTextChange = vm::updateHtmlText,
-                onImageChange = vm::setHtmlImage,
+                onImageChange = { 
+                    if (it == "PICK_LOCAL") imagePicker.launch(arrayOf("image/*"))
+                    else vm.setHtmlImage(it)
+                },
                 onDuplicate = vm::duplicateHtmlElement,
                 onDelete = vm::deleteHtmlElement,
                 onMoveUp = vm::moveHtmlUp,

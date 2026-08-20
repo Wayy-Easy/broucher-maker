@@ -154,13 +154,28 @@ fun HtmlElementPropertiesPanel(
         }
 
         if (props.src != null) {
-            Text("Image URL", style = BodySm, color = VCOnSurfaceVariant)
-            OutlinedTextField(
-                value = props.src,
-                onValueChange = onImageChange,
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
+            Text("Image source", style = BodySm, color = VCOnSurfaceVariant)
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(
+                    onClick = { onImageChange("PICK_LOCAL") },
+                    colors = ButtonDefaults.buttonColors(containerColor = VCPrimary),
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Filled.FileUpload, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Upload")
+                }
+                
+                OutlinedButton(
+                    onClick = { /* Could open a dialog for URL input */ },
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Paste URL")
+                }
+            }
             Spacer(Modifier.height(12.dp))
             
             Text("Object Fit", style = BodySm, color = VCOnSurfaceVariant)
