@@ -23,6 +23,8 @@ import com.brochurecraft.app.ui.components.DesignCanvas
 import com.brochurecraft.app.ui.components.EditorTool
 import com.brochurecraft.app.ui.components.EditorToolTray
 import com.brochurecraft.app.ui.components.ElementPropertiesPanel
+import com.brochurecraft.app.ui.components.HtmlDesignCanvas
+import com.brochurecraft.app.ui.components.HtmlElementPropertiesPanel
 import com.brochurecraft.app.ui.components.ToolActionPanel
 import com.brochurecraft.app.ui.theme.*
 import com.brochurecraft.app.ui.viewmodel.EditorViewModel
@@ -131,28 +133,46 @@ fun DesignEditorScreen(
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .fillMaxWidth(0.86f)
-                    .graphicsLayerScale(zoom)
+                    .fillMaxWidth(if (vm.isHtmlMode) 1f else 0.86f)
+                    .graphicsLayerScale(if (vm.isHtmlMode) 1f else zoom)
                     .shadowCard()
             ) {
-                DesignCanvas(
-                    state = vm.canvasState,
-                    selectedId = vm.selectedElementId,
-                    onSelect = vm::selectElement,
-                    onDragStart = vm::beginDragSnapshot,
-                    onElementMoved = { id, dx, dy ->
-                        vm.updateElementLive(id) { it.copy(x = (it.x + dx).coerceIn(-0.4f, 1.1f), y = (it.y + dy).coerceIn(-0.4f, 1.1f)) }
-                    },
-                    onElementResized = { id, dw, dh ->
-                        vm.updateElementLive(id) {
-                            it.copy(
-                                width = (it.width + dw).coerceIn(0.06f, 1.2f),
-                                height = (it.height + dh).coerceIn(0.03f, 1.2f)
-                            )
+                if (vm.isHtmlMode) {
+                    val context = LocalContext.current
+                    val html = remember(vm.htmlContent) {
+                        try {
+                            context.assets.open("templates/${vm.htmlContent}").bufferedReader().use { it.readText() }
+                        } catch (e: Exception) {
+                            "<html><body>Error loading template</body></html>"
                         }
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                    }
+                    HtmlDesignCanvas(
+                        htmlContent = html,
+                        jsCommands = vm.jsCommands,
+                        onElementSelected = vm::onHtmlElementSelected,
+                        onHtmlUpdated = { /* handle auto-save if needed */ },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    DesignCanvas(
+                        state = vm.canvasState,
+                        selectedId = vm.selectedElementId,
+                        onSelect = vm::selectElement,
+                        onDragStart = vm::beginDragSnapshot,
+                        onElementMoved = { id, dx, dy ->
+                            vm.updateElementLive(id) { it.copy(x = (it.x + dx).coerceIn(-0.4f, 1.1f), y = (it.y + dy).coerceIn(-0.4f, 1.1f)) }
+                        },
+                        onElementResized = { id, dw, dh ->
+                            vm.updateElementLive(id) {
+                                it.copy(
+                                    width = (it.width + dw).coerceIn(0.06f, 1.2f),
+                                    height = (it.height + dh).coerceIn(0.03f, 1.2f)
+                                )
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
 
             Column(
@@ -166,7 +186,18 @@ fun DesignEditorScreen(
         }
 
         // Contextual panel: element properties OR active tool panel
-        if (selected != null) {
+        if (vm.isHtmlMode && vm.selectedHtmlElementJson != null) {
+            HtmlElementPropertiesPanel(
+                propertiesJson = vm.selectedHtmlElementJson!!,
+                onStyleChange = vm::updateHtmlStyle,
+                onTextChange = vm::updateHtmlText,
+                onImageChange = vm::setHtmlImage,
+                onDuplicate = vm::duplicateHtmlElement,
+                onDelete = vm::deleteHtmlElement,
+                onMoveUp = vm::moveHtmlUp,
+                onMoveDown = vm::moveHtmlDown
+            )
+        } else if (!vm.isHtmlMode && selected != null) {
             ElementPropertiesPanel(
                 element = selected,
                 onTextChange = { vm.updateSelectedText(it, selected.fontSizeSp, selected.colorHex, selected.bold) },

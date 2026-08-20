@@ -16,12 +16,25 @@ import com.brochurecraft.app.data.repository.TemplateRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import java.util.UUID
 
 class EditorViewModel(
     private val designRepo: DesignRepository,
     private val templateRepo: TemplateRepository
 ) : ViewModel() {
+
+    var isHtmlMode by mutableStateOf(false)
+        private set
+    var htmlContent by mutableStateOf<String?>(null)
+        private set
+    var selectedHtmlElementJson by mutableStateOf<String?>(null)
+        private set
+
+    private val _jsCommands = MutableSharedFlow<String>(extraBufferCapacity = 10)
+    val jsCommands: SharedFlow<String> = _jsCommands.asSharedFlow()
 
     var designId: Long? = null
         private set
@@ -50,7 +63,17 @@ class EditorViewModel(
             if (entity != null) {
                 designId = entity.id
                 designName = entity.name
-                canvasState = DesignJson.decode(entity.elementsJson)
+                val json = entity.elementsJson
+                if (json.startsWith("html:")) {
+                    isHtmlMode = true
+                    // In real app, we might load content from file or DB
+                    // For now, let's assume it refers to an asset
+                    val assetName = json.removePrefix("html:")
+                    htmlContent = assetName 
+                } else {
+                    isHtmlMode = false
+                    canvasState = DesignJson.decode(json)
+                }
             }
             _loaded.value = true
         }
@@ -62,7 +85,14 @@ class EditorViewModel(
             val template = templateRepo.getById(templateId)
             if (template != null) {
                 designName = name.ifBlank { template.name }
-                canvasState = DesignJson.decode(template.elementsJson)
+                val json = template.elementsJson
+                if (json.startsWith("html:")) {
+                    isHtmlMode = true
+                    htmlContent = json.removePrefix("html:")
+                } else {
+                    isHtmlMode = false
+                    canvasState = DesignJson.decode(json)
+                }
             }
             _loaded.value = true
         }
@@ -106,7 +136,13 @@ class EditorViewModel(
         canvasState = redoStack.removeLast()
     }
 
-    fun selectElement(id: String?) { selectedElementId = id }
+    fun selectElement(id: String?) { 
+        if (!isHtmlMode) selectedElementId = id 
+    }
+
+    fun onHtmlElementSelected(json: String?) {
+        selectedHtmlElementJson = json
+    }
 
     fun addTextElement(text: String = "New Text") {
         pushUndo()
@@ -232,5 +268,34 @@ class EditorViewModel(
             designId = newId
             _saveEvent.value = newId
         }
+    }
+
+    // HTML manipulation methods
+    fun updateHtmlStyle(property: String, value: String) {
+        viewModelScope.launch { _jsCommands.emit("window.EditorApi.updateStyle('$property', '$value')") }
+    }
+
+    fun updateHtmlText(text: String) {
+        viewModelScope.launch { _jsCommands.emit("window.EditorApi.updateText(`${text.replace("`", "\\`")}`)") }
+    }
+
+    fun setHtmlImage(url: String) {
+        viewModelScope.launch { _jsCommands.emit("window.EditorApi.setImage('$url')") }
+    }
+
+    fun duplicateHtmlElement() {
+        viewModelScope.launch { _jsCommands.emit("window.EditorApi.duplicate()") }
+    }
+
+    fun deleteHtmlElement() {
+        viewModelScope.launch { _jsCommands.emit("window.EditorApi.delete()") }
+    }
+
+    fun moveHtmlUp() {
+        viewModelScope.launch { _jsCommands.emit("window.EditorApi.moveUp()") }
+    }
+
+    fun moveHtmlDown() {
+        viewModelScope.launch { _jsCommands.emit("window.EditorApi.moveDown()") }
     }
 }

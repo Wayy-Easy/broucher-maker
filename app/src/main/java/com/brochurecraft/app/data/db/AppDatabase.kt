@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [DesignEntity::class, TemplateEntity::class, BrandKitEntity::class],
-    version = 1,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -34,11 +34,19 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "brochurecraft.db"
-                ).addCallback(object : RoomDatabase.Callback() {
+                ).fallbackToDestructiveMigration()
+                .addCallback(object : RoomDatabase.Callback() {
                     override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
                         super.onCreate(db)
-                        // Seed the local SQLite DB with starter templates + a
-                        // couple of sample designs so the app is fully usable offline.
+                        seedDatabase()
+                    }
+
+                    override fun onDestructiveMigration(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                        super.onDestructiveMigration(db)
+                        seedDatabase()
+                    }
+
+                    private fun seedDatabase() {
                         CoroutineScope(Dispatchers.IO).launch {
                             val instance = INSTANCE ?: return@launch
                             instance.templateDao().insertAll(SeedData.templates())

@@ -109,6 +109,11 @@ object SeedData {
             elementsJson = DesignJson.encode(
                 titleTextElements("Elegant Catering", "Bespoke menus for weddings & corporate events", "PRO", "#4648D4")
             )
+        ),
+        TemplateEntity(
+            name = "Appetizer Special", category = "Restaurant", subtitle = "HTML Template",
+            isPro = true, badgeText = "HTML", accentColorHex = "#7e181e",
+            elementsJson = "html:template_1.html"
         )
     )
 

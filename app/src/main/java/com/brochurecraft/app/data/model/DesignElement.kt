@@ -46,6 +46,26 @@ data class DesignCanvasState(
     val backgroundImageUri: String? = null
 )
 
+@Serializable
+data class HtmlElementProperties(
+    val tagName: String,
+    val id: String? = null,
+    val text: String? = null,
+    val color: String? = null,
+    val backgroundColor: String? = null,
+    val fontSize: String? = null,
+    val fontWeight: String? = null,
+    val fontFamily: String? = null,
+    val textAlign: String? = null,
+    val lineHeight: String? = null,
+    val padding: String? = null,
+    val margin: String? = null,
+    val borderRadius: String? = null,
+    val boxShadow: String? = null,
+    val src: String? = null,
+    val objectFit: String? = null
+)
+
 object DesignJson {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
