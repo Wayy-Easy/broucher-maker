@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Healthy Life</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-terracotta': '#a84c38',
+            'brand-beige': '#d9c7a5',
+            'brand-cream': '#f8f4e6',
+          },
+          fontFamily: {
+            'serif': ['Georgia', 'serif'],
+            'sans': ['Helvetica Neue', 'Arial', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-utilities">
+    /* Arched image container */
+    .arch-container {
+      width: 200px;
+      height: 270px;
+      border-top-left-radius: 100px;
+      border-top-right-radius: 100px;
+      overflow: hidden;
+      border: 1px solid #d9c7a5;
+      padding: 8px;
+      margin: 0 auto;
+    }
+
+    @media (min-width: 640px) {
+      .arch-container {
+        width: 240px;
+        height: 320px;
+        border-top-left-radius: 120px;
+        border-top-right-radius: 120px;
+        padding: 10px;
+      }
+    }
+    
+    .arch-image-wrapper {
+      width: 100%;
+      height: 100%;
+      border-top-left-radius: 90px;
+      border-top-right-radius: 90px;
+      overflow: hidden;
+    }
+
+    @media (min-width: 640px) {
+      .arch-image-wrapper {
+        border-top-left-radius: 110px;
+        border-top-right-radius: 110px;
+      }
+    }
+    
+    .arch-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    /* Dotted line separator */
+    .dotted-line {
+      border-bottom: 1px dashed rgba(55, 65, 81, 0.3);
+    }
+  </style>
+<style>
+    body {
+      min-height: 100dvh;
+    }
+  </style>
+</head>
+<body class="font-sans text-gray-800 antialiased bg-gray-100 min-h-screen">
+
+  <!-- Main Grid Wrapper for Layout Flexibility -->
+  <div class="w-full max-w-7xl mx-auto min-h-screen grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 shadow-xl overflow-hidden">
+    
+    <!-- BEGIN: Hero Section (Panel 1) -->
+    <section class="bg-brand-terracotta text-brand-cream py-10 px-6 sm:py-16 flex flex-col items-center text-center justify-between relative min-h-[500px] lg:min-h-full">
+      <h1 class="font-serif text-3xl sm:text-4xl mb-6 sm:mb-10 tracking-wide">Healthy Life</h1>
+      
+      <div class="arch-container relative mb-6 sm:mb-10">
+        <!-- Decorative outer border lines -->
+        <div class="absolute inset-0 border border-brand-beige/50 border-t-0 rounded-b-sm pointer-events-none" style="top: 100px; bottom: 8px; left: 8px; right: 8px;"></div>
+        <div class="arch-image-wrapper">
+          <img alt="Healthy Fruit Bowl" class="arch-image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4XYwRnOjMcFsjHGK_KlHF2-nn9XOadLiMyguaaLsiZfVh0lesWzIqDL8Mb4_Zua-Mk0fpH0f5mmpDkOECNjvNWzKBhV5Gq__8VL7e7EyZnzIwR2_6zyQMK9N8j9hGOLODfLj4q-pAco6N23bcyMjMz9Hx0nHWn5V4SoZw5FLVPhiknvft0Ac-H6sXQXqgX8WG3ROEHeCOyP9B5L4Qq4yP7qEQCNzEV3JPDG1YNpCXvjIC7xqsmdsl"/>
+        </div>
+      </div>
+      
+      <div class="mt-auto pt-4">
+        <p class="text-xs uppercase tracking-widest opacity-80 max-w-[200px] mx-auto leading-relaxed">
+          A sophisticated A3 landscape trifold brochure
+        </p>
+      </div>
+    </section>
+    <!-- END: Hero Section (Panel 1) -->
+
+    <!-- BEGIN: Open Hours Section (Panel 2) -->
+    <section class="bg-brand-beige py-10 px-6 sm:py-16 sm:px-8 flex flex-col items-center justify-center">
+      <h2 class="font-serif text-2xl sm:text-3xl text-gray-900 mb-8 sm:mb-10 tracking-wide">Open Hours</h2>
+      <div class="w-full max-w-sm space-y-3 sm:space-y-4">
+        <!-- Monday -->
+        <div class="flex items-center justify-between dotted-line pb-2.5 sm:pb-3 text-sm sm:text-base">
+          <div class="flex items-center gap-2.5 sm:gap-3">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-gray-700 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            <span class="text-gray-800 font-medium">Monday</span>
+          </div>
+          <span class="text-gray-800">8:00am - 5:00pm</span>
+        </div>
+        <!-- Tuesday -->
+        <div class="flex items-center justify-between dotted-line pb-2.5 sm:pb-3 text-sm sm:text-base">
+          <div class="flex items-center gap-2.5 sm:gap-3">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-gray-700 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            <span class="text-gray-800 font-medium">Tuesday</span>
+          </div>
+          <span class="text-gray-800">8:00am - 5:00pm</span>
+        </div>
+        <!-- Wednesday -->
+        <div class="flex items-center justify-between dotted-line pb-2.5 sm:pb-3 text-sm sm:text-base">
+          <div class="flex items-center gap-2.5 sm:gap-3">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-gray-700 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            <span class="text-gray-800 font-medium">Wednesday</span>
+          </div>
+          <span class="text-gray-800">8:00am - 5:00pm</span>
+        </div>
+        <!-- Thursday -->
+        <div class="flex items-center justify-between dotted-line pb-2.5 sm:pb-3 text-sm sm:text-base">
+          <div class="flex items-center gap-2.5 sm:gap-3">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-gray-700 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            <span class="text-gray-800 font-medium">Thursday</span>
+          </div>
+          <span class="text-gray-800">8:00am - 5:00pm</span>
+        </div>
+        <!-- Friday -->
+        <div class="flex items-center justify-between dotted-line pb-2.5 sm:pb-3 text-sm sm:text-base">
+          <div class="flex items-center gap-2.5 sm:gap-3">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-gray-700 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            <span class="text-gray-800 font-medium">Friday</span>
+          </div>
+          <span class="text-gray-800">8:00am - 5:00pm</span>
+        </div>
+        <!-- Saturday -->
+        <div class="flex items-center justify-between pb-2.5 sm:pb-3 text-sm sm:text-base">
+          <div class="flex items-center gap-2.5 sm:gap-3">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-gray-700 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            <span class="text-gray-800 font-medium">Saturday</span>
+          </div>
+          <span class="text-gray-800">Closed</span>
+        </div>
+      </div>
+    </section>
+    <!-- END: Open Hours Section (Panel 2) -->
+
+    <!-- BEGIN: Best Sellers Section (Panel 3) -->
+    <section class="bg-brand-terracotta text-brand-cream py-10 px-6 sm:py-16 sm:px-8 flex flex-col justify-between md:col-span-2 lg:col-span-1">
+      <div>
+        <h2 class="font-serif text-2xl sm:text-3xl text-center mb-8 sm:mb-12 tracking-wide">Our Best Sellers</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6 sm:gap-y-8">
+          <!-- Item 1 -->
+          <div>
+            <h3 class="font-serif text-base sm:text-lg mb-1">Flanvo Disher</h3>
+            <p class="text-xs opacity-80 leading-relaxed">Lorem ipsum dolor sit amet, consectetur adipiscing namra.</p>
+          </div>
+          <!-- Item 2 -->
+          <div>
+            <h3 class="font-serif text-base sm:text-lg mb-1">Flauvve Daker</h3>
+            <p class="text-xs opacity-80 leading-relaxed">Lorem ipsum dolor sit amet, consectetur adipiscing marwa.</p>
+          </div>
+          <!-- Item 3 -->
+          <div>
+            <h3 class="font-serif text-base sm:text-lg mb-1">Flanvo Disher</h3>
+            <p class="text-xs opacity-80 leading-relaxed">Lorem ipsum dolor sit amet, consectetur adipiscing namra.</p>
+          </div>
+          <!-- Item 4 -->
+          <div>
+            <h3 class="font-serif text-base sm:text-lg mb-1">Flauvve Daker</h3>
+            <p class="text-xs opacity-80 leading-relaxed">Lorem ipsum dolor sit amet, consectetur adipiscing maima.</p>
+          </div>
+          <!-- Item 5 -->
+          <div>
+            <h3 class="font-serif text-base sm:text-lg mb-1">Flanvo Disher</h3>
+            <p class="text-xs opacity-80 leading-relaxed">Lorem ipsum dolor sit amet, consectetur adipiscing namra.</p>
+          </div>
+          <!-- Item 6 -->
+          <div>
+            <h3 class="font-serif text-base sm:text-lg mb-1">Flauvve Daker</h3>
+            <p class="text-xs opacity-80 leading-relaxed">Lorem ipsum dolor sit amet, consectetur adipiscing maima.</p>
+          </div>
+          <!-- Item 7 -->
+          <div>
+            <h3 class="font-serif text-base sm:text-lg mb-1">Flanvo Disher</h3>
+            <p class="text-xs opacity-80 leading-relaxed">Lorem ipsum dolor sit amet, consectetur adipiscing namra.</p>
+          </div>
+          <!-- Item 8 -->
+          <div>
+            <h3 class="font-serif text-base sm:text-lg mb-1">Flauvve Daker</h3>
+            <p class="text-xs opacity-80 leading-relaxed">Lorem ipsum dolor sit amet, consectetur adipiscing marris.</p>
+          </div>
+          <!-- Item 9 -->
+          <div>
+            <h3 class="font-serif text-base sm:text-lg mb-1">Flanvo Disher</h3>
+            <p class="text-xs opacity-80 leading-relaxed">Lorem ipsum dolor sit amet, consectetur adipiscing namra.</p>
+          </div>
+          <!-- Item 10 -->
+          <div>
+            <h3 class="font-serif text-base sm:text-lg mb-1">Flauvve Daker</h3>
+            <p class="text-xs opacity-80 leading-relaxed">Lorem ipsum dolor sit amet, consectetur adipiscing marma.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer line & QR Code -->
+      <div class="mt-10 sm:mt-16 border-t border-brand-cream/30 pt-6 flex justify-end">
+        <img alt="QR Code" class="w-14 h-14 sm:w-16 sm:h-16 bg-white p-1 rounded-sm shadow-sm shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAu1l7TVrAyFUOYqsuayubWDo_2Z9w9CD58abCf4H6xch_ULrxU7NwKUgzAu5nU7Nf0tdzkJcwuKo2N1P6Cb0moiylX4t0NTGQOhkddn2L6ohzWDPZcOWaOGoq4vQQQrzNQeC9PODY_79vkWwFwjmKhujvfj8LvVN5cCwJwK7bjGK4jgLEnxuz8HU4Eq9Ud-7B4a_MxFrWMb6wSJmgZeKqPBzY0K4aHk8UTgSlUbInn0dyPeMR2GWe5"/>
+      </div>
+    </section>
+    <!-- END: Best Sellers Section (Panel 3) -->
+
+  </div>
+
+</body>
+</html>

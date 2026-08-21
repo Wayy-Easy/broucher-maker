@@ -22,7 +22,12 @@
     }
 
     function handleElementClick(e) {
-        // Prevent default only if we are in editor mode
+        // If we are clicking a text element that is already selected and focused,
+        // let the event pass through to allow caret movement/typing.
+        if (selectedElement && selectedElement === e.target && selectedElement.contentEditable === "true") {
+            return;
+        }
+
         e.preventDefault();
         e.stopPropagation();
 
@@ -73,7 +78,19 @@
         // Enable inline editing for text nodes
         if (isTextNode(el)) {
             el.contentEditable = "true";
-            el.focus();
+            // Prevent Enter from creating divs
+            el.onkeydown = function(e) {
+                if (e.key === 'Enter') {
+                    document.execCommand('insertLineBreak');
+                    return false;
+                }
+            };
+            el.oninput = function() {
+                updateSelectionOverlay();
+                if (window.AndroidBridge) {
+                    window.AndroidBridge.onContentChanged(EditorApi.getHtml());
+                }
+            };
         }
     }
 
@@ -102,7 +119,7 @@
     }
 
     function isTextNode(el) {
-        return ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'SPAN', 'A', 'BUTTON', 'LI', 'TD'].includes(el.tagName);
+        return ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'SPAN', 'A', 'BUTTON', 'LI', 'TD', 'TH', 'SMALL', 'STRONG', 'EM', 'B', 'I'].includes(el.tagName);
     }
 
     function rgbToHex(rgb) {
