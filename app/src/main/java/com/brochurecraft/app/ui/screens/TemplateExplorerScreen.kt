@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.*
@@ -100,6 +101,15 @@ fun TemplateExplorerScreen(onOpenTemplate: (Long, String) -> Unit) {
 @Composable
 private fun TemplateCard(template: TemplateEntity, onClick: () -> Unit) {
     val context = LocalContext.current
+    var showWebView by remember { mutableStateOf(false) }
+
+    // Optimization: Delay WebView initialization until the item has been stationary for ~300ms.
+    // This prevents "jank" during fast scrolling by not spawning dozens of WebViews at once.
+    LaunchedEffect(template.id) {
+        kotlinx.coroutines.delay(300)
+        showWebView = true
+    }
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
@@ -110,9 +120,10 @@ private fun TemplateCard(template: TemplateEntity, onClick: () -> Unit) {
                     RoundedCornerShape(16.dp)
                 )
                 .border(1.dp, VCBorderSubtle, RoundedCornerShape(16.dp))
-                .clip(RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(16.dp)),
+            contentAlignment = Alignment.Center
         ) {
-            if (template.elementsJson.startsWith("html:")) {
+            if (showWebView && template.elementsJson.startsWith("html:")) {
                 val html = remember(template.elementsJson) {
                     try {
                         val assetName = template.elementsJson.removePrefix("html:")
@@ -124,20 +135,25 @@ private fun TemplateCard(template: TemplateEntity, onClick: () -> Unit) {
                 if (html != null) {
                     Box(modifier = Modifier.fillMaxSize().padding(10.dp)) {
                         key(template.id) {
-                            // WebView fills this box directly and computes its own zoom
-                            // internally - no external scale guess, see HtmlDesignCanvas.kt.
                             HtmlDesignCanvas(
                                 htmlContent = html,
                                 jsCommands = remember { MutableStateFlow("").asSharedFlow() },
                                 onElementSelected = {},
                                 onHtmlUpdated = {},
                                 isReadOnly = true,
-                                viewportWidth = 480, // representative "card" breakpoint
+                                viewportWidth = 480,
                                 modifier = Modifier.fillMaxSize().background(Color.White)
                             )
                         }
                     }
                 }
+            } else {
+                Icon(
+                    imageVector = Icons.Filled.Description,
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.6f),
+                    modifier = Modifier.size(48.dp)
+                )
             }
 
             if (template.isPro) {
@@ -168,19 +184,30 @@ private fun TemplateCard(template: TemplateEntity, onClick: () -> Unit) {
                 }
             }
 
-            // OVERLAY BOX: This is the most important part.
-            // It covers the entire card area, intercepting all clicks
-            // and preventing them from reaching the WebView.
+            // OVERLAY BOX: Re-adding this to ensure clicks are captured.
+            // AndroidView (WebView) often consumes touch events even in read-only mode,
+            // preventing the parent's .clickable from firing. This transparent box
+            // sits on top and intercepts all taps to ensure navigation works every time.
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .clip(RoundedCornerShape(16.dp))
                     .clickable { onClick() }
                     .zIndex(1f)
             )
         }
         Spacer(Modifier.height(8.dp))
-        Text(template.name, style = BodyLg, color = VCOnSurface, fontWeight = FontWeight.SemiBold)
-        Text(template.subtitle, style = BodySm, color = VCOnSurfaceVariant)
+        Text(
+            text = template.name,
+            style = BodyLg,
+            color = VCOnSurface,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.clickable { onClick() }
+        )
+        Text(
+            text = template.subtitle,
+            style = BodySm,
+            color = VCOnSurfaceVariant,
+            modifier = Modifier.clickable { onClick() }
+        )
     }
 }

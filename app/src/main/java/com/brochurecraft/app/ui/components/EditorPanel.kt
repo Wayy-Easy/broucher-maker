@@ -6,6 +6,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -15,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.brochurecraft.app.data.db.entity.BrandKitEntity
 import com.brochurecraft.app.data.model.DesignElement
 import com.brochurecraft.app.data.model.ElementType
@@ -242,7 +246,9 @@ fun ToolActionPanel(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(max = 240.dp) // Limit height to prevent taking up too much screen
             .background(VCWorkspaceSurface)
+            .verticalScroll(rememberScrollState())
             .padding(14.dp)
     ) {
         when (tool) {
@@ -255,17 +261,20 @@ fun ToolActionPanel(
             }
             EditorTool.LAYOUT -> {
                 Text("Sheet Size", style = TitleMd, color = VCOnSurface)
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(8.dp))
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    SheetSize.values().forEach { size ->
+                    SheetSize.entries.forEach { size ->
                         val selected = size == currentSheetSize
                         FilterChip(
                             selected = selected,
                             onClick = { onSheetSizeChange(size) },
-                            label = { Text(size.label) },
+                            label = { Text(size.label, fontSize = 12.sp) },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = VCPrimary.copy(alpha = 0.1f),
                                 selectedLabelColor = VCPrimary
@@ -277,7 +286,10 @@ fun ToolActionPanel(
             EditorTool.TEXT -> {
                 Text("Add Text", style = TitleMd, color = VCOnSurface)
                 Spacer(Modifier.height(10.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
                     TextStylePreset("Heading") { onAddText("Add a heading", 28f, true) }
                     TextStylePreset("Subheading") { onAddText("Add a subheading", 20f, true) }
                     TextStylePreset("Body text") { onAddText("Add body text", 15f, false) }
@@ -299,7 +311,10 @@ fun ToolActionPanel(
             EditorTool.ELEMENTS -> {
                 Text("Shapes", style = TitleMd, color = VCOnSurface)
                 Spacer(Modifier.height(10.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
                     ShapeButton(Icons.Filled.Rectangle, "Rectangle") { onAddShape(ShapeKind.RECTANGLE) }
                     ShapeButton(Icons.Filled.Circle, "Circle") { onAddShape(ShapeKind.CIRCLE) }
                     ShapeButton(Icons.Filled.HorizontalRule, "Line") { onAddShape(ShapeKind.LINE) }
@@ -321,7 +336,10 @@ fun ToolActionPanel(
                 val colors = try {
                     Json.decodeFromString<List<String>>(brandKit?.colorsJson ?: "[]")
                 } catch (e: Exception) { emptyList() }
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
                     colors.forEach { hex ->
                         Box(
                             modifier = Modifier

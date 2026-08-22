@@ -7,6 +7,11 @@
         document.body.addEventListener('click', handleElementClick, true);
         setupMutationObserver();
         console.log("Editor bridge initialized");
+
+        // Report initial content so Android has the full HTML (including viewport meta) immediately
+        if (window.AndroidBridge) {
+            window.AndroidBridge.onContentChanged(EditorApi.getHtml());
+        }
     }
 
     function createSelectionOverlay() {
@@ -87,9 +92,7 @@
             };
             el.oninput = function() {
                 updateSelectionOverlay();
-                if (window.AndroidBridge) {
-                    window.AndroidBridge.onContentChanged(EditorApi.getHtml());
-                }
+                reportChange();
             };
         }
     }
@@ -132,18 +135,26 @@
         return `#${r}${g}${b}`;
     }
 
+    function reportChange() {
+        if (window.AndroidBridge) {
+            window.AndroidBridge.onContentChanged(EditorApi.getHtml());
+        }
+    }
+
     // Exposed functions for Android
     window.EditorApi = {
         updateStyle: function(property, value) {
             if (selectedElement) {
                 selectedElement.style[property] = value;
                 updateSelectionOverlay();
+                reportChange();
             }
         },
         updateText: function(text) {
             if (selectedElement) {
                 selectedElement.innerText = text;
                 updateSelectionOverlay();
+                reportChange();
             }
         },
         setImage: function(url) {
@@ -154,6 +165,7 @@
                     selectedElement.style.backgroundImage = `url(${url})`;
                 }
                 updateSelectionOverlay();
+                reportChange();
             }
         },
         duplicate: function() {
@@ -161,6 +173,7 @@
                 const clone = selectedElement.cloneNode(true);
                 selectedElement.parentNode.insertBefore(clone, selectedElement.nextSibling);
                 selectElement(clone);
+                reportChange();
             }
         },
         delete: function() {
@@ -168,19 +181,55 @@
                 const parent = selectedElement.parentNode;
                 selectedElement.remove();
                 deselect();
+                reportChange();
             }
         },
         moveUp: function() {
             if (selectedElement && selectedElement.previousElementSibling) {
                 selectedElement.parentNode.insertBefore(selectedElement, selectedElement.previousElementSibling);
                 updateSelectionOverlay();
+                reportChange();
             }
         },
         moveDown: function() {
             if (selectedElement && selectedElement.nextElementSibling) {
                 selectedElement.parentNode.insertBefore(selectedElement.nextElementSibling, selectedElement);
                 updateSelectionOverlay();
+                reportChange();
             }
+        },
+        addText: function(text) {
+            const el = document.createElement('p');
+            el.innerText = text;
+            el.style.position = 'absolute';
+            el.style.left = '50%';
+            el.style.top = '50%';
+            el.style.transform = 'translate(-50%, -50%)';
+            el.style.fontSize = '24px';
+            el.style.color = '#111C2D';
+            el.style.zIndex = '1000';
+            document.body.appendChild(el);
+            selectElement(el);
+            reportChange();
+        },
+        addShape: function(type) {
+            const el = document.createElement('div');
+            el.style.position = 'absolute';
+            el.style.left = '50%';
+            el.style.top = '50%';
+            el.style.transform = 'translate(-50%, -50%)';
+            el.style.width = '100px';
+            el.style.height = '100px';
+            el.style.backgroundColor = '#4648D4';
+            el.style.zIndex = '1000';
+            if (type === 'CIRCLE') {
+                el.style.borderRadius = '50%';
+            } else if (type === 'RECTANGLE') {
+                el.style.borderRadius = '8px';
+            }
+            document.body.appendChild(el);
+            selectElement(el);
+            reportChange();
         },
         getHtml: function() {
             // Remove editor-specific elements before returning

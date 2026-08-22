@@ -50,13 +50,19 @@ class ExportViewModel(private val repo: DesignRepository) : ViewModel() {
             val entity = repo.getById(id)
             design = entity
             val json = entity?.elementsJson
-            if (json != null && json.startsWith("html:")) {
-                isHtmlMode = true
-                htmlContent = json.removePrefix("html:")
-                canvasState = DesignCanvasState() // Ensure sheetSize is default or loaded
-            } else {
-                isHtmlMode = false
-                canvasState = DesignJson.decode(json)
+            if (json != null) {
+                if (json.startsWith("html:")) {
+                    // Support legacy format
+                    isHtmlMode = true
+                    val assetName = json.removePrefix("html:")
+                    htmlContent = assetName
+                    canvasState = DesignCanvasState(htmlContent = assetName)
+                } else {
+                    val state = DesignJson.decode(json)
+                    canvasState = state
+                    isHtmlMode = state.htmlContent != null
+                    htmlContent = state.htmlContent
+                }
             }
         }
     }
@@ -91,7 +97,8 @@ class ExportViewModel(private val repo: DesignRepository) : ViewModel() {
             format = format,
             widthPx = widthPx,
             heightPx = heightPx,
-            htmlBitmap = capturedBitmap
+            htmlBitmap = capturedBitmap,
+            quality = (qualityPercent * 100).toInt().coerceIn(1, 100)
         )
         _exportedFile.value = file
         return file

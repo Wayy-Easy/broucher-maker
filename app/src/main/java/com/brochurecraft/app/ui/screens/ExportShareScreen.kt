@@ -3,6 +3,8 @@ package com.brochurecraft.app.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -16,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -36,6 +39,7 @@ fun ExportShareScreen(designId: Long, onBack: () -> Unit) {
     val app = rememberApp()
     val context = LocalContext.current
     val vm: ExportViewModel = viewModel(factory = LambdaViewModelFactory { ExportViewModel(app.designRepository) })
+    var zoomScale by remember { mutableStateOf(1f) }
 
     LaunchedEffect(designId) { vm.load(designId) }
 
@@ -59,62 +63,68 @@ fun ExportShareScreen(designId: Long, onBack: () -> Unit) {
         Divider(color = VCBorderSubtle)
 
         Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(20.dp)) {
+            // Optimization: Fixed height and scrollable preview area.
+            // This prevents the screen from jumping when changing sheet sizes (A4 -> A3).
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(vm.canvasState.sheetSize.aspectRatio)
+                    .height(420.dp) // Fixed height for visual consistency
                     .background(VCWorkspaceSurface, RoundedCornerShape(20.dp))
                     .border(1.dp, VCBorderSubtle, RoundedCornerShape(20.dp))
+                    .pointerInput(Unit) {
+                        detectTransformGestures { _, _, zoom, _ ->
+                            zoomScale = (zoomScale * zoom).coerceIn(0.5f, 5f)
+                        }
+                    }
                     .padding(16.dp),
                 contentAlignment = Alignment.Center
             ) {
                 val sheetSize = vm.canvasState.sheetSize
                 val designWidth = sheetSize.previewWidthPx
 
-                BoxWithConstraints(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.TopStart
+                // Inner box handles the actual scroll if the preview is larger than the fixed container
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .horizontalScroll(rememberScrollState())
                 ) {
-                    if (vm.isHtmlMode) {
-                        // The WebView fills this box directly and computes its own zoom
-                        // internally (see setInitialScale in HtmlDesignCanvas) - no
-                        // external scale guess, so it can't mismatch. See
-                        // DesignEditorScreen.kt for the full rationale.
-                        val html = remember(vm.htmlContent) {
-                            try {
-                                context.assets.open("templates/${vm.htmlContent}").bufferedReader().use { it.readText() }
-                            } catch (e: Exception) {
-                                "<html><body>Error loading template</body></html>"
+                    Box(
+                        modifier = Modifier
+                            .size(width = designWidth.dp, height = (designWidth / sheetSize.aspectRatio).dp)
+                            .align(Alignment.Center)
+                            .graphicsLayer {
+                                scaleX = zoomScale
+                                scaleY = zoomScale
                             }
-                        }
-                        HtmlDesignCanvas(
-                            htmlContent = html,
-                            jsCommands = MutableStateFlow("").asSharedFlow(),
-                            captureRequest = vm.captureRequest,
-                            onCaptured = { vm.capturedBitmap = it },
-                            onElementSelected = {},
-                            onHtmlUpdated = {},
-                            forceDesktop = sheetSize.isDesktopPreview,
-                            viewportWidth = designWidth,
-                            modifier = Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color.White)
-                        )
-                    } else {
-                        val boxScope = this
-                        val availableWidthPx = boxScope.constraints.maxWidth
-                        val density = androidx.compose.ui.platform.LocalDensity.current
-                        val designWidthPx = with(density) { designWidth.dp.toPx() }
-                        val scaleFactor = availableWidthPx.toFloat() / designWidthPx
-
-                        Box(
-                            modifier = Modifier
-                                .size(width = designWidth.dp, height = (designWidth / sheetSize.aspectRatio).dp)
-                                .graphicsLayer {
-                                    scaleX = scaleFactor
-                                    scaleY = scaleFactor
-                                    transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, 0f)
-                                    clip = true
+                    ) {
+                        if (vm.isHtmlMode) {
+                            // Use the saved HTML content from the design if available,
+                            // otherwise fallback to the template asset.
+                            val html = remember(vm.htmlContent) {
+                                try {
+                                    val content = vm.htmlContent ?: ""
+                                    if (content.startsWith("<html", ignoreCase = true) || content.startsWith("<!DOCTYPE", ignoreCase = true)) {
+                                        content
+                                    } else {
+                                        context.assets.open("templates/$content").bufferedReader().use { it.readText() }
+                                    }
+                                } catch (e: Exception) {
+                                    "<html><body>Error loading design content</body></html>"
                                 }
-                        ) {
+                            }
+                            HtmlDesignCanvas(
+                                htmlContent = html,
+                                jsCommands = MutableStateFlow("").asSharedFlow(),
+                                captureRequest = vm.captureRequest,
+                                onCaptured = { vm.capturedBitmap = it },
+                                onElementSelected = {},
+                                onHtmlUpdated = {},
+                                forceDesktop = sheetSize.isDesktopPreview,
+                                viewportWidth = designWidth,
+                                modifier = Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color.White)
+                            )
+                        } else {
                             DesignCanvas(
                                 state = vm.canvasState,
                                 selectedId = null,
@@ -134,7 +144,9 @@ fun ExportShareScreen(designId: Long, onBack: () -> Unit) {
             Text("Sheet Size", style = TitleMd, color = VCOnSurface, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(10.dp))
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 com.brochurecraft.app.data.model.SheetSize.values().forEach { size ->

@@ -21,7 +21,8 @@ object ExportManager {
         format: ExportFormat,
         widthPx: Int = 1080,
         heightPx: Int = 1512,
-        htmlBitmap: Bitmap? = null
+        htmlBitmap: Bitmap? = null,
+        quality: Int = 100
     ): File {
         val exportsDir = File(context.cacheDir, "exports").apply { mkdirs() }
         val safeName = fileBaseName.ifBlank { "design" }.replace(Regex("[^A-Za-z0-9_-]"), "_")
@@ -30,13 +31,13 @@ object ExportManager {
             ExportFormat.PNG -> {
                 val bmp = htmlBitmap ?: CanvasRenderer.render(state, widthPx, heightPx)
                 val file = File(exportsDir, "$safeName.png")
-                FileOutputStream(file).use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
+                FileOutputStream(file).use { bmp.compress(Bitmap.CompressFormat.PNG, quality, it) }
                 file
             }
             ExportFormat.JPG -> {
                 val bmp = htmlBitmap ?: CanvasRenderer.render(state, widthPx, heightPx)
                 val file = File(exportsDir, "$safeName.jpg")
-                FileOutputStream(file).use { bmp.compress(Bitmap.CompressFormat.JPEG, 92, it) }
+                FileOutputStream(file).use { bmp.compress(Bitmap.CompressFormat.JPEG, quality, it) }
                 file
             }
             ExportFormat.PDF -> {

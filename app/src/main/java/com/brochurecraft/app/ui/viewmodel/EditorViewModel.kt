@@ -20,6 +20,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.serialization.json.*
 import java.util.UUID
 
@@ -61,6 +63,11 @@ class EditorViewModel(
     private val _saveEvent = MutableSharedFlow<Long?>(extraBufferCapacity = 1)
     val saveEvent: SharedFlow<Long?> = _saveEvent.asSharedFlow()
 
+    private val _exitEvent = Channel<Unit>(Channel.BUFFERED)
+    val exitEvent = _exitEvent.receiveAsFlow()
+
+    private var isPendingExit = false
+
     private val _loaded = MutableStateFlow(false)
     val loaded: StateFlow<Boolean> = _loaded
 
@@ -75,16 +82,25 @@ class EditorViewModel(
                     designName = entity.name
                     val json = entity.elementsJson
                     if (json.startsWith("html:")) {
+                        // Support for legacy "html:asset.html" format
                         isHtmlMode = true
                         val assetName = json.removePrefix("html:")
                         htmlContent = assetName 
+                        canvasState = DesignCanvasState(htmlContent = assetName)
                     } else {
-                        isHtmlMode = false
-                        canvasState = DesignJson.decode(json)
+                        val state = DesignJson.decode(json)
+                        canvasState = state
+                        isHtmlMode = state.htmlContent != null
+                        htmlContent = state.htmlContent
                     }
                 }
                 _loaded.value = true
-            } finally {
+                // If it's NOT HTML mode, we can clear loading now.
+                // If it IS HTML mode, the WebView will call onPageLoaded.
+                if (!isHtmlMode) {
+                    isLoading = false
+                }
+            } catch (e: Exception) {
                 isLoading = false
             }
         }
@@ -101,14 +117,21 @@ class EditorViewModel(
                     val json = template.elementsJson
                     if (json.startsWith("html:")) {
                         isHtmlMode = true
-                        htmlContent = json.removePrefix("html:")
+                        val assetName = json.removePrefix("html:")
+                        htmlContent = assetName
+                        canvasState = DesignCanvasState(htmlContent = assetName)
                     } else {
-                        isHtmlMode = false
-                        canvasState = DesignJson.decode(json)
+                        val state = DesignJson.decode(json)
+                        canvasState = state
+                        isHtmlMode = state.htmlContent != null
+                        htmlContent = state.htmlContent
                     }
                 }
                 _loaded.value = true
-            } finally {
+                if (!isHtmlMode) {
+                    isLoading = false
+                }
+            } catch (e: Exception) {
                 isLoading = false
             }
         }
@@ -160,7 +183,15 @@ class EditorViewModel(
         selectedHtmlElementJson = json
     }
 
+    fun onHtmlContentChanged(html: String) {
+        canvasState = canvasState.copy(htmlContent = html)
+    }
+
     fun addTextElement(text: String = "New Text") {
+        if (isHtmlMode) {
+            viewModelScope.launch { _jsCommands.emit("window.EditorApi.addText(`${text.replace("`", "\\`")}`)") }
+            return
+        }
         pushUndo()
         val newEl = DesignElement(
             id = UUID.randomUUID().toString(),
@@ -175,6 +206,10 @@ class EditorViewModel(
     }
 
     fun addShapeElement(kind: ShapeKind = ShapeKind.RECTANGLE) {
+        if (isHtmlMode) {
+            viewModelScope.launch { _jsCommands.emit("window.EditorApi.addShape('$kind')") }
+            return
+        }
         pushUndo()
         val newEl = DesignElement(
             id = UUID.randomUUID().toString(),
@@ -264,7 +299,12 @@ class EditorViewModel(
 
     fun setSheetSize(size: SheetSize) {
         pushUndo()
+        isLoading = true
         canvasState = canvasState.copy(sheetSize = size)
+    }
+
+    fun onPageLoaded() {
+        isLoading = false
     }
 
     fun selectedElement(): DesignElement? = canvasState.elements.find { it.id == selectedElementId }
@@ -297,9 +337,26 @@ class EditorViewModel(
             }
             designId = newId
             _saveEvent.emit(newId)
+            if (isPendingExit) {
+                _exitEvent.send(Unit)
+                isPendingExit = false
+            }
             newId
         } finally {
             isLoading = false
+        }
+    }
+
+    fun triggerSaveAndExit() {
+        isPendingExit = true
+        if (isHtmlMode) {
+            requestCapture()
+        } else {
+            // For non-HTML, we don't have a capture callback, so we just save immediately.
+            // In a real app, we'd capture the Composable to a bitmap here.
+            viewModelScope.launch {
+                save(null) 
+            }
         }
     }
 

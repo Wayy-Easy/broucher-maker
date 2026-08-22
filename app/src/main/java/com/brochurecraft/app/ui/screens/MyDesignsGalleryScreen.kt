@@ -16,10 +16,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import com.brochurecraft.app.data.db.entity.DesignEntity
 import com.brochurecraft.app.ui.theme.*
 import com.brochurecraft.app.ui.viewmodel.GalleryTab
@@ -144,14 +147,24 @@ private fun DesignCard(
                 .height(150.dp)
                 .background(VCSurfaceContainer, RoundedCornerShape(16.dp))
                 .border(1.dp, VCBorderSubtle, RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(16.dp))
                 .clickable { onClick() }
         ) {
-            Icon(
-                Icons.Filled.Description,
-                contentDescription = null,
-                tint = VCOutlineVariant,
-                modifier = Modifier.align(Alignment.Center).size(36.dp)
-            )
+            if (design.thumbnailPath != null) {
+                AsyncImage(
+                    model = design.thumbnailPath,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Icon(
+                    Icons.Filled.Description,
+                    contentDescription = null,
+                    tint = VCOutlineVariant,
+                    modifier = Modifier.align(Alignment.Center).size(36.dp)
+                )
+            }
             Icon(
                 imageVector = if (design.isFavorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
                 contentDescription = "Favorite",

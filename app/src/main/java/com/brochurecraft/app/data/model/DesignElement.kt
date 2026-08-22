@@ -68,7 +68,8 @@ data class DesignCanvasState(
     val elements: List<DesignElement> = emptyList(),
     val backgroundColorHex: String = "#FFFFFF",
     val backgroundImageUri: String? = null,
-    val sheetSize: SheetSize = SheetSize.A4
+    val sheetSize: SheetSize = SheetSize.A4,
+    val htmlContent: String? = null
 )
 
 @Serializable

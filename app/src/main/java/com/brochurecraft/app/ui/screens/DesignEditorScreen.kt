@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -17,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -73,6 +75,12 @@ fun DesignEditorScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        vm.exitEvent.collect {
+            onBack()
+        }
+    }
+
     val onCaptured: (Bitmap) -> Unit = { bitmap ->
         scope.launch {
             // Save the captured bitmap as a thumbnail
@@ -93,20 +101,7 @@ fun DesignEditorScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showDiscardDialog = false
-                    if (vm.isHtmlMode) {
-                        vm.requestCapture()
-                        // In HTML mode, onCaptured will eventually call vm.save then we should exit.
-                        // But onBack() needs to be called after save. 
-                        // I'll add a 'saveAndExit' flag in VM or just handle it here.
-                        // For simplicity, let's just save and assume the user sees the gallery later.
-                        onBack()
-                    } else {
-                        scope.launch {
-                            val thumb = ExportManager.thumbnailFile(context, vm.designId ?: 0L, vm.canvasState)
-                            vm.save(thumb)
-                            onBack()
-                        }
-                    }
+                    vm.triggerSaveAndExit()
                 }) {
                     Text("Save & Exit")
                 }
@@ -128,6 +123,7 @@ fun DesignEditorScreen(
     }
 
     var activeTool by remember { mutableStateOf<EditorTool?>(null) }
+    var zoomScale by remember { mutableStateOf(1f) }
 
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         if (uri != null) {
@@ -210,7 +206,17 @@ fun DesignEditorScreen(
             )
 
             // Canvas area (scrollable + zoomable)
-            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .pointerInput(Unit) {
+                        detectTransformGestures { _, _, zoom, _ ->
+                            zoomScale = (zoomScale * zoom).coerceIn(0.5f, 5f)
+                        }
+                    },
+                contentAlignment = Alignment.Center
+            ) {
                 val sheetSize = vm.canvasState.sheetSize
                 val designWidth = sheetSize.previewWidthPx
 
@@ -219,6 +225,10 @@ fun DesignEditorScreen(
                         .fillMaxWidth(0.96f)
                         .fillMaxHeight()
                         .padding(vertical = 20.dp)
+                        .graphicsLayer {
+                            scaleX = zoomScale
+                            scaleY = zoomScale
+                        }
                         .shadowCard(),
                     contentAlignment = Alignment.TopStart
                 ) {
@@ -234,7 +244,12 @@ fun DesignEditorScreen(
                         val context = LocalContext.current
                         val html = remember(vm.htmlContent) {
                             try {
-                                context.assets.open("templates/${vm.htmlContent}").bufferedReader().use { it.readText() }
+                                val content = vm.htmlContent ?: ""
+                                if (content.startsWith("<html", ignoreCase = true) || content.startsWith("<!DOCTYPE", ignoreCase = true)) {
+                                    content
+                                } else {
+                                    context.assets.open("templates/$content").bufferedReader().use { it.readText() }
+                                }
                             } catch (e: Exception) {
                                 "<html><body>Error loading template</body></html>"
                             }
@@ -245,7 +260,8 @@ fun DesignEditorScreen(
                             captureRequest = vm.captureRequest,
                             onCaptured = onCaptured,
                             onElementSelected = vm::onHtmlElementSelected,
-                            onHtmlUpdated = { /* handle auto-save if needed */ },
+                            onHtmlUpdated = vm::onHtmlContentChanged,
+                            onPageFinished = vm::onPageLoaded,
                             forceDesktop = sheetSize.isDesktopPreview,
                             viewportWidth = designWidth,
                             modifier = Modifier.fillMaxSize()

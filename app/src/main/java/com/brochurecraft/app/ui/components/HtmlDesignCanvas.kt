@@ -51,6 +51,7 @@ fun HtmlDesignCanvas(
     onCaptured: ((Bitmap) -> Unit)? = null,
     onElementSelected: (String?) -> Unit,
     onHtmlUpdated: (String) -> Unit,
+    onPageFinished: () -> Unit = {},
     isReadOnly: Boolean = false,
     forceDesktop: Boolean = false,
     viewportWidth: Int = 0, // 0 means don't force a breakpoint; otherwise exact CSS px to lay out at
@@ -140,6 +141,7 @@ fun HtmlDesignCanvas(
                         if (!isReadOnly) {
                             injectEditorBridge(view)
                         }
+                        onPageFinished()
                     }
                 }
 
