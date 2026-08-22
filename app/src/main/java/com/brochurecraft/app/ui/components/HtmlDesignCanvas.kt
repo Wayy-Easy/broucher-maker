@@ -8,11 +8,13 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.viewinterop.AndroidView
 import android.util.Log
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 /**
  * Matches a `<meta ... name="viewport" ...>` tag regardless of attribute order/quote style,
@@ -32,7 +34,7 @@ private val headOpenRegex = Regex("<head[^>]*>", RegexOption.IGNORE_CASE)
  * produces a fresh, correctly-sized render.
  */
 private fun withViewportWidth(html: String, widthPx: Int): String {
-    val metaTag = "<meta name=\"viewport\" content=\"width=$widthPx, initial-scale=1.0, maximum-scale=1.0\">"
+    val metaTag = "<meta name=\"viewport\" content=\"width=$widthPx\">"
     return when {
         viewportMetaRegex.containsMatchIn(html) -> viewportMetaRegex.replace(html, metaTag)
         headOpenRegex.containsMatchIn(html) -> headOpenRegex.replace(html, "$0$metaTag")
@@ -51,11 +53,12 @@ fun HtmlDesignCanvas(
     onHtmlUpdated: (String) -> Unit,
     isReadOnly: Boolean = false,
     forceDesktop: Boolean = false,
-    viewportWidth: Int = 0, // 0 means use container width; otherwise exact CSS px to render at
-    onContentMeasured: ((widthDp: Int, heightDp: Int) -> Unit)? = null,
+    viewportWidth: Int = 0, // 0 means don't force a breakpoint; otherwise exact CSS px to lay out at
     modifier: Modifier = Modifier
 ) {
     var webViewInstance by remember { mutableStateOf<WebView?>(null) }
+    var webViewWidthPx by remember { mutableStateOf(0) }
+    val density = LocalDensity.current
 
     // Single source of truth for "what should currently be loaded in the WebView".
     // Recomputed whenever the raw template OR the target viewport width changes, so
@@ -63,6 +66,25 @@ fun HtmlDesignCanvas(
     // with the correct baked-in viewport - no stale/async DOM patch involved.
     val resolvedHtml = remember(htmlContent, viewportWidth) {
         if (viewportWidth > 0) withViewportWidth(htmlContent, viewportWidth) else htmlContent
+    }
+
+    // THE ACTUAL FIX: instead of guessing what CSS pixel width the WebView ends up
+    // rendering at and trying to pre-compute an external Compose-side scale to compensate
+    // (which was the root cause of every previous "doesn't fill the canvas" report - the
+    // guess and WebView's real internal rendering width didn't agree), we hand the exact
+    // zoom job to the WebView engine itself via setInitialScale(). WebView always knows,
+    // with total precision, both (a) the CSS width it laid the page out at (viewportWidth,
+    // via the meta tag) and (b) its own real pixel width (webViewWidthPx, measured by
+    // Compose) - so it can compute the correct zoom with zero guesswork on our side. This
+    // also means the WebView's Android View can simply fillMaxSize() of its container with
+    // NO separate scaling layer, NO transformOrigin, and NO risk of ever overflowing its
+    // bounds (a plain View can't paint outside its own laid-out area).
+    LaunchedEffect(webViewWidthPx, viewportWidth, density) {
+        val webView = webViewInstance ?: return@LaunchedEffect
+        if (webViewWidthPx <= 0 || viewportWidth <= 0) return@LaunchedEffect
+        val widthDp = with(density) { webViewWidthPx.toDp().value }
+        val percent = ((widthDp / viewportWidth) * 100f).roundToInt().coerceIn(5, 2000)
+        webView.setInitialScale(percent)
     }
 
     LaunchedEffect(jsCommands) {
@@ -90,7 +112,7 @@ fun HtmlDesignCanvas(
     }
 
     AndroidView(
-        modifier = modifier,
+        modifier = modifier.onSizeChanged { size -> webViewWidthPx = size.width },
         factory = { context ->
             WebView(context).apply {
                 settings.javaScriptEnabled = true
@@ -103,39 +125,37 @@ fun HtmlDesignCanvas(
                 settings.cacheMode = android.webkit.WebSettings.LOAD_NO_CACHE
                 settings.textZoom = 100
 
+                // We drive zoom explicitly and deterministically via setInitialScale above -
+                // disable the user's own pinch/double-tap zoom so it can never fight that,
+                // and so switching sizes always looks the same regardless of prior gestures.
+                settings.setSupportZoom(false)
+                settings.builtInZoomControls = false
+                settings.displayZoomControls = false
+
                 updateSettingsForLayout(forceDesktop)
 
                 webViewClient = object : WebViewClient() {
                     override fun onPageFinished(view: WebView?, url: String?) {
                         super.onPageFinished(view, url)
-                        // Always measure real content size, edit mode or not, so the
-                        // canvas can be scaled to fit the ACTUAL template - not a guess.
-                        injectContentSizeObserver(view)
                         if (!isReadOnly) {
                             injectEditorBridge(view)
                         }
                     }
                 }
 
-                // Registered unconditionally: onContentMeasured must fire in every mode
-                // (edit + export preview), while the edit-only callbacks simply go unused
-                // in read-only mode since editor_bridge.js is never injected there.
-                addJavascriptInterface(object {
-                    @JavascriptInterface
-                    fun onElementSelected(json: String?) {
-                        onElementSelected(json)
-                    }
+                if (!isReadOnly) {
+                    addJavascriptInterface(object {
+                        @JavascriptInterface
+                        fun onElementSelected(json: String?) {
+                            onElementSelected(json)
+                        }
 
-                    @JavascriptInterface
-                    fun onContentChanged(html: String) {
-                        onHtmlUpdated(html)
-                    }
-
-                    @JavascriptInterface
-                    fun onContentMeasured(widthDp: Int, heightDp: Int) {
-                        onContentMeasured?.invoke(widthDp, heightDp)
-                    }
-                }, "AndroidBridge")
+                        @JavascriptInterface
+                        fun onContentChanged(html: String) {
+                            onHtmlUpdated(html)
+                        }
+                    }, "AndroidBridge")
+                }
 
                 webViewInstance = this
                 loadDataWithBaseURL("file:///android_asset/templates/", resolvedHtml, "text/html", "UTF-8", null)
@@ -150,8 +170,7 @@ fun HtmlDesignCanvas(
             // Reload whenever the fully-resolved HTML (template + baked-in viewport width)
             // differs from what's currently loaded. This fires both when the template
             // changes AND when the user switches sheet size (A4/Mobile/Tablet/...), since
-            // resolvedHtml embeds viewportWidth - fixing the "switching size does nothing"
-            // bug caused by the old content-only comparison.
+            // resolvedHtml embeds viewportWidth.
             if (webView.tag != resolvedHtml) {
                 webView.tag = resolvedHtml
                 webView.loadDataWithBaseURL("file:///android_asset/templates/", resolvedHtml, "text/html", "UTF-8", null)
@@ -162,10 +181,12 @@ fun HtmlDesignCanvas(
 
 /**
  * Only the explicit "Desktop" preview should emulate a desktop browser. Every other size
- * (Mobile/Tablet/A4/A3/A5) renders as a real mobile WebView would - relying purely on the
- * baked-in viewport width (see [withViewportWidth]) to drive the template's own responsive
- * CSS, rather than faking a desktop UA/wide-viewport zoom-to-fit trick which fights against
- * an exact target width.
+ * (Mobile/Tablet/A4/A3/A5) renders as a real mobile WebView would - relying on the baked-in
+ * viewport width (see [withViewportWidth]) to drive the template's own responsive CSS.
+ * `loadWithOverviewMode` is deliberately left off: it only auto-zooms in ONE direction
+ * (shrinks wide content to fit), and only conditionally. We need exact, symmetric zoom in
+ * both directions every time, which is why that job is handled explicitly via
+ * setInitialScale() above instead.
  */
 private fun WebView.updateSettingsForLayout(forceDesktop: Boolean) {
     settings.apply {
@@ -189,43 +210,4 @@ private fun injectEditorBridge(webView: WebView?) {
     } catch (e: Exception) {
         Log.e("HtmlDesignCanvas", "Failed to inject editor bridge", e)
     }
-}
-
-/**
- * Measures the template's REAL rendered content size (not the assumed/forced viewport
- * size) and reports it back through AndroidBridge.onContentMeasured, so Compose can scale
- * the canvas to fit the actual content instead of guessing from a paper aspect ratio.
- *
- * A single measurement right after page load isn't enough: these templates pull in
- * Tailwind's CDN build (which injects styles asynchronously) and web fonts (which reflow
- * text once loaded), both of which can change content height well after onPageFinished.
- * A ResizeObserver on <html> keeps re-reporting whenever that settles, with a timer-based
- * fallback for older WebView builds that lack ResizeObserver.
- */
-private fun injectContentSizeObserver(webView: WebView?) {
-    val script = """
-        (function() {
-            function reportSize() {
-                try {
-                    var w = document.documentElement.scrollWidth;
-                    var h = document.documentElement.scrollHeight;
-                    if (window.AndroidBridge && AndroidBridge.onContentMeasured) {
-                        AndroidBridge.onContentMeasured(w, h);
-                    }
-                } catch (e) {}
-            }
-            requestAnimationFrame(function() { requestAnimationFrame(reportSize); });
-            if (window.ResizeObserver) {
-                if (window.__vcResizeObserver) { window.__vcResizeObserver.disconnect(); }
-                var ro = new ResizeObserver(function() { reportSize(); });
-                ro.observe(document.documentElement);
-                window.__vcResizeObserver = ro;
-            } else {
-                window.addEventListener('load', reportSize);
-                setTimeout(reportSize, 500);
-                setTimeout(reportSize, 1500);
-            }
-        })();
-    """.trimIndent()
-    webView?.evaluateJavascript(script, null)
 }

@@ -214,80 +214,63 @@ fun DesignEditorScreen(
                 val sheetSize = vm.canvasState.sheetSize
                 val designWidth = sheetSize.previewWidthPx
 
-                // Real rendered content height (in dp) reported by the WebView once the
-                // template has actually laid itself out - NOT the paper-shape guess. Keyed
-                // off template+size so switching either resets it and avoids showing a
-                // stale height from a previous template while the new one loads.
-                var measuredContentHeight by remember(vm.htmlContent, designWidth) { mutableStateOf<Int?>(null) }
-
                 BoxWithConstraints(
                     modifier = Modifier
                         .fillMaxWidth(0.96f)
                         .fillMaxHeight()
                         .padding(vertical = 20.dp)
                         .shadowCard(),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.TopStart
                 ) {
-                    val scope = this
-                    val availableWidthPx = scope.constraints.maxWidth
-                    val availableHeightPx = scope.constraints.maxHeight
-                    val density = androidx.compose.ui.platform.LocalDensity.current
-
-                    // Until the first real measurement arrives, fall back to the paper-ratio
-                    // guess purely to avoid a blank flash - it gets replaced within a frame
-                    // or two once the WebView reports its actual content size.
-                    val designHeight = measuredContentHeight
-                        ?: (designWidth / sheetSize.aspectRatio).toInt()
-
-                    val designWidthPx = with(density) { designWidth.dp.toPx() }
-                    val designHeightPx = with(density) { designHeight.dp.toPx() }
-
-                    // "Contain" fit: scale by whichever axis is more constraining so the
-                    // template's real content always fits fully inside the available area
-                    // in BOTH dimensions - this is what stops tall content from being cut
-                    // off (or, previously, bleeding down over the Export button).
-                    val scaleFactor = if (vm.isHtmlMode) {
-                        minOf(availableWidthPx.toFloat() / designWidthPx, availableHeightPx.toFloat() / designHeightPx)
+                    if (vm.isHtmlMode) {
+                        // HTML mode: the WebView itself just fills this box directly - full
+                        // stop, no separate scaling layer, no size math on our side at all.
+                        // `designWidth` (the CSS breakpoint) is handed to the WebView, which
+                        // computes its OWN zoom internally (see setInitialScale in
+                        // HtmlDesignCanvas) using its exact real pixel width - it can't
+                        // mismatch the way an external guess could. A plain View also can
+                        // never paint outside its own laid-out bounds, so this can't bleed
+                        // over other UI either.
+                        val context = LocalContext.current
+                        val html = remember(vm.htmlContent) {
+                            try {
+                                context.assets.open("templates/${vm.htmlContent}").bufferedReader().use { it.readText() }
+                            } catch (e: Exception) {
+                                "<html><body>Error loading template</body></html>"
+                            }
+                        }
+                        HtmlDesignCanvas(
+                            htmlContent = html,
+                            jsCommands = vm.jsCommands,
+                            captureRequest = vm.captureRequest,
+                            onCaptured = onCaptured,
+                            onElementSelected = vm::onHtmlElementSelected,
+                            onHtmlUpdated = { /* handle auto-save if needed */ },
+                            forceDesktop = sheetSize.isDesktopPreview,
+                            viewportWidth = designWidth,
+                            modifier = Modifier.fillMaxSize()
+                        )
                     } else {
-                        availableWidthPx.toFloat() / designWidthPx
-                    }
+                        // Non-HTML (raw shape/text) designs keep the literal paper aspect
+                        // ratio, since elements are positioned as fractions of that exact
+                        // shape - stretching it would relocate/distort every element. This
+                        // path still needs its own explicit scale-to-fit box.
+                        val scope = this
+                        val availableWidthPx = scope.constraints.maxWidth
+                        val density = androidx.compose.ui.platform.LocalDensity.current
+                        val designWidthPx = with(density) { designWidth.dp.toPx() }
+                        val scaleFactor = availableWidthPx.toFloat() / designWidthPx
 
-                    // Non-HTML (raw shape/text) designs still use the literal paper aspect
-                    // ratio boundary; only HTML mode switches to content-driven sizing.
-                    val boxHeight = if (vm.isHtmlMode) designHeight.dp else (designWidth / sheetSize.aspectRatio).dp
-
-                    Box(
-                        modifier = Modifier
-                            .size(width = designWidth.dp, height = boxHeight)
-                            .graphicsLayer {
-                                scaleX = scaleFactor
-                                scaleY = scaleFactor
-                                transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 0.5f)
-                                clip = true // hard safety net: content can never paint outside its own box
-                            }
-                    ) {
-                        if (vm.isHtmlMode) {
-                            val context = LocalContext.current
-                            val html = remember(vm.htmlContent) {
-                                try {
-                                    context.assets.open("templates/${vm.htmlContent}").bufferedReader().use { it.readText() }
-                                } catch (e: Exception) {
-                                    "<html><body>Error loading template</body></html>"
+                        Box(
+                            modifier = Modifier
+                                .size(width = designWidth.dp, height = (designWidth / sheetSize.aspectRatio).dp)
+                                .graphicsLayer {
+                                    scaleX = scaleFactor
+                                    scaleY = scaleFactor
+                                    transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, 0f)
+                                    clip = true
                                 }
-                            }
-                            HtmlDesignCanvas(
-                                htmlContent = html,
-                                jsCommands = vm.jsCommands,
-                                captureRequest = vm.captureRequest,
-                                onCaptured = onCaptured,
-                                onElementSelected = vm::onHtmlElementSelected,
-                                onHtmlUpdated = { /* handle auto-save if needed */ },
-                                forceDesktop = sheetSize.isDesktopPreview,
-                                viewportWidth = designWidth,
-                                onContentMeasured = { _, h -> measuredContentHeight = h },
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        } else {
+                        ) {
                             DesignCanvas(
                                 state = vm.canvasState,
                                 selectedId = vm.selectedElementId,

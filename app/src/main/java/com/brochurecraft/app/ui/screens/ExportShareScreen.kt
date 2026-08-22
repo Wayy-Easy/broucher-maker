@@ -71,63 +71,50 @@ fun ExportShareScreen(designId: Long, onBack: () -> Unit) {
                 val sheetSize = vm.canvasState.sheetSize
                 val designWidth = sheetSize.previewWidthPx
 
-                // Real rendered content height (dp) reported by the WebView, keyed off
-                // template+size so it resets cleanly when either changes.
-                var measuredContentHeight by remember(vm.htmlContent, designWidth) { mutableStateOf<Int?>(null) }
-
-                BoxWithConstraints(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    val boxScope = this
-                    val availableWidthPx = boxScope.constraints.maxWidth
-                    val availableHeightPx = boxScope.constraints.maxHeight
-                    val density = androidx.compose.ui.platform.LocalDensity.current
-
-                    val designHeight = measuredContentHeight
-                        ?: (designWidth / sheetSize.aspectRatio).toInt()
-
-                    val designWidthPx = with(density) { designWidth.dp.toPx() }
-                    val designHeightPx = with(density) { designHeight.dp.toPx() }
-
-                    // Contain-fit within the sheet frame using the template's REAL content
-                    // size, rather than assuming it always matches the frame's aspect ratio.
-                    val scaleFactor = if (vm.isHtmlMode) {
-                        minOf(availableWidthPx.toFloat() / designWidthPx, availableHeightPx.toFloat() / designHeightPx)
+                BoxWithConstraints(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.TopStart
+                ) {
+                    if (vm.isHtmlMode) {
+                        // The WebView fills this box directly and computes its own zoom
+                        // internally (see setInitialScale in HtmlDesignCanvas) - no
+                        // external scale guess, so it can't mismatch. See
+                        // DesignEditorScreen.kt for the full rationale.
+                        val html = remember(vm.htmlContent) {
+                            try {
+                                context.assets.open("templates/${vm.htmlContent}").bufferedReader().use { it.readText() }
+                            } catch (e: Exception) {
+                                "<html><body>Error loading template</body></html>"
+                            }
+                        }
+                        HtmlDesignCanvas(
+                            htmlContent = html,
+                            jsCommands = MutableStateFlow("").asSharedFlow(),
+                            captureRequest = vm.captureRequest,
+                            onCaptured = { vm.capturedBitmap = it },
+                            onElementSelected = {},
+                            onHtmlUpdated = {},
+                            forceDesktop = sheetSize.isDesktopPreview,
+                            viewportWidth = designWidth,
+                            modifier = Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color.White)
+                        )
                     } else {
-                        availableWidthPx.toFloat() / designWidthPx
-                    }
+                        val boxScope = this
+                        val availableWidthPx = boxScope.constraints.maxWidth
+                        val density = androidx.compose.ui.platform.LocalDensity.current
+                        val designWidthPx = with(density) { designWidth.dp.toPx() }
+                        val scaleFactor = availableWidthPx.toFloat() / designWidthPx
 
-                    val boxHeight = if (vm.isHtmlMode) designHeight.dp else (designWidth / sheetSize.aspectRatio).dp
-
-                    Box(
-                        modifier = Modifier
-                            .size(width = designWidth.dp, height = boxHeight)
-                            .graphicsLayer {
-                                scaleX = scaleFactor
-                                scaleY = scaleFactor
-                                transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 0.5f)
-                                clip = true // safety net: content can never paint outside the sheet frame
-                            }
-                    ) {
-                        if (vm.isHtmlMode) {
-                            val html = remember(vm.htmlContent) {
-                                try {
-                                    context.assets.open("templates/${vm.htmlContent}").bufferedReader().use { it.readText() }
-                                } catch (e: Exception) {
-                                    "<html><body>Error loading template</body></html>"
+                        Box(
+                            modifier = Modifier
+                                .size(width = designWidth.dp, height = (designWidth / sheetSize.aspectRatio).dp)
+                                .graphicsLayer {
+                                    scaleX = scaleFactor
+                                    scaleY = scaleFactor
+                                    transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, 0f)
+                                    clip = true
                                 }
-                            }
-                            HtmlDesignCanvas(
-                                htmlContent = html,
-                                jsCommands = MutableStateFlow("").asSharedFlow(),
-                                captureRequest = vm.captureRequest,
-                                onCaptured = { vm.capturedBitmap = it },
-                                onElementSelected = {},
-                                onHtmlUpdated = {},
-                                forceDesktop = sheetSize.isDesktopPreview,
-                                viewportWidth = designWidth,
-                                onContentMeasured = { _, h -> measuredContentHeight = h },
-                                modifier = Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color.White)
-                            )
-                        } else {
+                        ) {
                             DesignCanvas(
                                 state = vm.canvasState,
                                 selectedId = null,

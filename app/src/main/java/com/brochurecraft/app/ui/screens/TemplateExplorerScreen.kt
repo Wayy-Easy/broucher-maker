@@ -21,8 +21,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -126,34 +124,17 @@ private fun TemplateCard(template: TemplateEntity, onClick: () -> Unit) {
                 if (html != null) {
                     Box(modifier = Modifier.fillMaxSize().padding(10.dp)) {
                         key(template.id) {
-                            BoxWithConstraints(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-                                val boxScope = this
-                                val availableWidthPx = boxScope.constraints.maxWidth
-                                val density = androidx.compose.ui.platform.LocalDensity.current
-                                val designWidth = 1000
-                                val designWidthPx = with(density) { designWidth.dp.toPx() }
-                                val scaleFactor = availableWidthPx.toFloat() / designWidthPx
-
-                                Box(
-                                    modifier = Modifier
-                                        .size(width = designWidth.dp, height = (designWidth / 0.75f).dp)
-                                        .graphicsLayer {
-                                            scaleX = scaleFactor
-                                            scaleY = scaleFactor
-                                            transformOrigin = TransformOrigin(0f, 0f)
-                                        }
-                                ) {
-                                    HtmlDesignCanvas(
-                                        htmlContent = html,
-                                        jsCommands = remember { MutableStateFlow("").asSharedFlow() },
-                                        onElementSelected = {},
-                                        onHtmlUpdated = {},
-                                        isReadOnly = true,
-                                        viewportWidth = designWidth,
-                                        modifier = Modifier.fillMaxSize().background(Color.White)
-                                    )
-                                }
-                            }
+                            // WebView fills this box directly and computes its own zoom
+                            // internally - no external scale guess, see HtmlDesignCanvas.kt.
+                            HtmlDesignCanvas(
+                                htmlContent = html,
+                                jsCommands = remember { MutableStateFlow("").asSharedFlow() },
+                                onElementSelected = {},
+                                onHtmlUpdated = {},
+                                isReadOnly = true,
+                                viewportWidth = 480, // representative "card" breakpoint
+                                modifier = Modifier.fillMaxSize().background(Color.White)
+                            )
                         }
                     }
                 }
