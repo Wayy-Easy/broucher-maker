@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -17,7 +18,9 @@ import androidx.compose.ui.unit.dp
 import com.brochurecraft.app.data.db.entity.BrandKitEntity
 import com.brochurecraft.app.data.model.DesignElement
 import com.brochurecraft.app.data.model.ElementType
+import com.brochurecraft.app.data.model.HtmlElementProperties
 import com.brochurecraft.app.data.model.ShapeKind
+import com.brochurecraft.app.data.model.SheetSize
 import com.brochurecraft.app.ui.theme.*
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -32,7 +35,8 @@ fun ElementPropertiesPanel(
     onColorChange: (String) -> Unit,
     onBoldToggle: () -> Unit,
     onBringForward: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onClose: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -49,6 +53,7 @@ fun ElementPropertiesPanel(
             Row {
                 IconButton(onClick = onBringForward) { Icon(Icons.Filled.FlipToFront, contentDescription = "Bring forward", tint = VCOnSurfaceVariant) }
                 IconButton(onClick = onDelete) { Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = VCError) }
+                IconButton(onClick = onClose) { Icon(Icons.Filled.Close, contentDescription = "Close", tint = VCOnSurfaceVariant) }
             }
         }
 
@@ -100,15 +105,139 @@ fun ElementPropertiesPanel(
 }
 
 @Composable
+fun HtmlElementPropertiesPanel(
+    propertiesJson: String,
+    onStyleChange: (String, String) -> Unit,
+    onTextChange: (String) -> Unit,
+    onImageChange: (String) -> Unit,
+    onDuplicate: () -> Unit,
+    onDelete: () -> Unit,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit,
+    onClose: () -> Unit
+) {
+    val props = remember(propertiesJson) {
+        try {
+            Json { ignoreUnknownKeys = true }.decodeFromString<HtmlElementProperties>(propertiesJson)
+        } catch (e: Exception) {
+            null
+        }
+    } ?: return
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(VCWorkspaceSurface)
+            .padding(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Edit ${props.tagName}", style = TitleMd, color = VCOnSurface)
+            Row {
+                IconButton(onClick = onMoveUp) { Icon(Icons.Filled.ArrowUpward, contentDescription = "Move Up", tint = VCOnSurfaceVariant) }
+                IconButton(onClick = onMoveDown) { Icon(Icons.Filled.ArrowDownward, contentDescription = "Move Down", tint = VCOnSurfaceVariant) }
+                IconButton(onClick = onDuplicate) { Icon(Icons.Filled.ContentCopy, contentDescription = "Duplicate", tint = VCOnSurfaceVariant) }
+                IconButton(onClick = onDelete) { Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = VCError) }
+                IconButton(onClick = onClose) { Icon(Icons.Filled.Close, contentDescription = "Close", tint = VCOnSurfaceVariant) }
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        if (props.text != null) {
+            OutlinedTextField(
+                value = props.text,
+                onValueChange = onTextChange,
+                label = { Text("Content") },
+                modifier = Modifier.fillMaxWidth(),
+                maxLines = 3
+            )
+            Spacer(Modifier.height(12.dp))
+        }
+
+        if (props.src != null) {
+            Text("Image source", style = BodySm, color = VCOnSurfaceVariant)
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(
+                    onClick = { onImageChange("PICK_LOCAL") },
+                    colors = ButtonDefaults.buttonColors(containerColor = VCPrimary),
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Filled.FileUpload, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Upload")
+                }
+                
+                OutlinedButton(
+                    onClick = { /* Could open a dialog for URL input */ },
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Paste URL")
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+            
+            Text("Object Fit", style = BodySm, color = VCOnSurfaceVariant)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                AssistChip(onClick = { onStyleChange("objectFit", "cover") }, label = { Text("Cover") })
+                AssistChip(onClick = { onStyleChange("objectFit", "contain") }, label = { Text("Contain") })
+            }
+            Spacer(Modifier.height(12.dp))
+        }
+
+        Text("Colors", style = BodySm, color = VCOnSurfaceVariant)
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+             val quickColors = listOf("#111C2D", "#4648D4", "#B4136D", "#006C49", "#F59E0B", "#BA1A1A", "#FFFFFF")
+            quickColors.forEach { hex ->
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .background(Color(android.graphics.Color.parseColor(hex)), CircleShape)
+                        .border(1.dp, VCBorderSubtle, CircleShape)
+                        .clickable { 
+                            if (props.tagName == "IMG" || (props.backgroundColor != null && props.backgroundColor != "rgba(0, 0, 0, 0)" && props.backgroundColor != "#00000000")) {
+                                onStyleChange("backgroundColor", hex)
+                            } else {
+                                onStyleChange("color", hex)
+                            }
+                        }
+                )
+            }
+        }
+        
+        Spacer(Modifier.height(12.dp))
+        Text("Typography", style = BodySm, color = VCOnSurfaceVariant)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+             AssistChip(
+                 onClick = { onStyleChange("fontWeight", if (props.fontWeight == "bold" || props.fontWeight == "700") "normal" else "bold") },
+                 label = { Text("Bold") }
+             )
+             AssistChip(
+                 onClick = { onStyleChange("fontStyle", if (props.fontSize == "italic") "normal" else "italic") },
+                 label = { Text("Italic") }
+             )
+        }
+    }
+}
+
+@Composable
 fun ToolActionPanel(
     tool: EditorTool,
     brandKit: BrandKitEntity?,
+    currentSheetSize: SheetSize = SheetSize.A4,
     onAddText: (String, Float, Boolean) -> Unit,
     onAddShape: (ShapeKind) -> Unit,
     onPickImage: () -> Unit,
     onAddLogo: () -> Unit,
     onApplyBrandColor: (String) -> Unit,
-    onSwitchTemplate: () -> Unit
+    onSwitchTemplate: () -> Unit,
+    onSheetSizeChange: (SheetSize) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -117,6 +246,34 @@ fun ToolActionPanel(
             .padding(14.dp)
     ) {
         when (tool) {
+            EditorTool.TEMPLATES -> {
+                Text("Templates", style = TitleMd, color = VCOnSurface)
+                Spacer(Modifier.height(10.dp))
+                OutlinedButton(onClick = onSwitchTemplate, shape = RoundedCornerShape(24.dp)) {
+                    Text("Browse template gallery")
+                }
+            }
+            EditorTool.LAYOUT -> {
+                Text("Sheet Size", style = TitleMd, color = VCOnSurface)
+                Spacer(Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    SheetSize.values().forEach { size ->
+                        val selected = size == currentSheetSize
+                        FilterChip(
+                            selected = selected,
+                            onClick = { onSheetSizeChange(size) },
+                            label = { Text(size.label) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = VCPrimary.copy(alpha = 0.1f),
+                                selectedLabelColor = VCPrimary
+                            )
+                        )
+                    }
+                }
+            }
             EditorTool.TEXT -> {
                 Text("Add Text", style = TitleMd, color = VCOnSurface)
                 Spacer(Modifier.height(10.dp))
@@ -174,13 +331,6 @@ fun ToolActionPanel(
                                 .clickable { onApplyBrandColor(hex) }
                         )
                     }
-                }
-            }
-            EditorTool.TEMPLATES -> {
-                Text("Templates", style = TitleMd, color = VCOnSurface)
-                Spacer(Modifier.height(10.dp))
-                OutlinedButton(onClick = onSwitchTemplate, shape = RoundedCornerShape(24.dp)) {
-                    Text("Browse template gallery")
                 }
             }
         }

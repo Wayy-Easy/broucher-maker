@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Delicious Special Food Menu</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              dark: '#114a31', // Dark green from image
+              light: '#e8f0eb',
+            }
+          },
+          fontFamily: {
+            serif: ['Georgia', 'Cambria', '"Times New Roman"', 'Times', 'serif'],
+            sans: ['ui-sans-serif', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-utilities">
+    .menu-item-image {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 3px solid #114a31;
+    }
+    @media (min-width: 640px) {
+      .menu-item-image {
+        width: 100px;
+        height: 100px;
+      }
+    }
+  </style>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&amp;family=Playfair+Display:wght@700&amp;display=swap" rel="stylesheet"/><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-white text-gray-800 font-sans antialiased min-h-screen flex flex-col items-center">
+<div class="w-full max-w-4xl px-4 py-6 sm:px-6 lg:px-8 bg-white shadow-xl rounded-lg my-4 overflow-hidden">
+<!-- BEGIN: Header & Hero Section -->
+<header class="text-center mb-6 border-4 border-brand-dark rounded-xl p-6">
+<h1 class="text-3xl sm:text-5xl font-serif font-bold text-brand-dark mb-4 tracking-tight">Delicious Special Food Menu</h1>
+<div class="relative w-full h-48 sm:h-72 overflow-hidden rounded-md border-b-4 border-brand-dark pb-4">
+<img alt="Signature Biryani" class="w-full h-full object-cover rounded-md" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxpwNgj_FC1G7ZZ5SHKaEgtcQEjXYkplbPvjAEVxql2wgpuupembgXknQVzEg-Rqq3NR_NQoJfDLw5EQmdhJNm__BP20k72tsej7M2xTEoBS8ObAdJErdBbYWERnf_17Tc4SCVqlrGrZkLwDigW6heavyHrrocgOla9NO73ZsFaW-h5ubgwUVQSyzjvLe978R_glCZrL4WMubtNH6I7fjZB69DbyO1hGEwVJx8HUrtUQRwe0XUcnob"/>
+<div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 bg-brand-dark text-white px-6 py-2 rounded font-bold text-lg whitespace-nowrap shadow-md">
+          Signature Biryani
+        </div>
+</div>
+</header>
+<!-- END: Header & Hero Section -->
+<!-- BEGIN: Menu Section -->
+<main class="mt-12">
+<h2 class="text-2xl sm:text-3xl font-bold text-brand-dark mb-6 text-center sm:text-left">Savor Menu</h2>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+<!-- Menu Item 1 -->
+<article class="flex items-start space-x-4 border-b border-gray-200 pb-4 sm:border-none sm:pb-0 sm:pr-4 sm:border-r sm:last:border-r-0 lg:border-r">
+<img alt="Chicken Biryani" class="menu-item-image flex-shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAVVv32ddc7hEsFCvvqyae-MebZnFITRoz47ylfDmncbHslwlGv50P-g077XLhDORvxgeYWffT8y09i0RbVht8wVvCxEsi7udcoMw0SbYjdh96VtZLIxlzikgC5MQvptw2OCePXaU6O8S6XNbirdQIaf4RFsPcRqrh1BufaCh2YKS398o0pX_G7jH5kIpz89KPmb6E6it4s0DVpf984AtE8oMYkCv_LU4gL6flfhKlf0CpzOUT697VL"/>
+<div>
+<h3 class="font-bold text-lg text-brand-dark leading-tight mb-1">Chicken Biryani</h3>
+<p class="text-sm text-gray-600 mb-2 leading-snug">Chicken biryani with mutton with suc roal and nyanis.</p>
+<p class="font-bold text-xl text-brand-dark">$40</p>
+</div>
+</article>
+<!-- Menu Item 2 -->
+<article class="flex items-start space-x-4 border-b border-gray-200 pb-4 sm:border-none sm:pb-0 sm:pr-4 sm:border-r sm:last:border-r-0 lg:border-r">
+<img alt="Mutton Korma" class="menu-item-image flex-shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1j-tSgbKp6zARx_clB2Fk_BnWUSmlC6alw-jPKZIrstamUH9M2_H9JYVxKG-__AwCXiyDvZdP6eenQ6cpr_1r2XosCkDJj8D8lz3C192tSCnvTV5k4zbV4VmJSNDxTwjB3Ow4Pek_gGN2xpvuhFbGnmdjYpK-B5Qcu4xr3w8xdNKtFVpG5p9DiTpQiWpsuC_GT5_zBGx5rhdiwKLKTtx-mmYAaiEwuA-3jzlr40leNg3vIbrBVfXp"/>
+<div>
+<h3 class="font-bold text-lg text-brand-dark leading-tight mb-1">Mutton Korma</h3>
+<p class="text-sm text-gray-600 mb-2 leading-snug">Chicken korma with mutton with pazros and erowols.</p>
+<p class="font-bold text-xl text-brand-dark">$35</p>
+</div>
+</article>
+<!-- Menu Item 3 -->
+<article class="flex items-start space-x-4 border-b border-gray-200 pb-4 sm:border-none sm:pb-0 sm:pr-4 sm:border-r sm:last:border-r-0 lg:border-r">
+<img alt="Paneer Tikka Masala" class="menu-item-image flex-shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhYqMWrUzWKuMbYu1gVqSxBK_l_AkUR_XXmYIv-dbKvHaWw5Ic-f8hmx8FhqGYNWJ7DpwDvy2694r9Mo4lpbJJWa7-33t4o5_61hAP324NaPL_6MuW1GSHnlxXpepa7J0J-VOyZ7jrUaiW6ggYL2otVTxzhzUiL5U13ox0ISGX9qR6pmhnVDVjAIKeCRZboyC8eP0OMYmpovw4_KkY9WVVdJGxGj7O6qZrrE7LeONC82NQSuMvIG41"/>
+<div>
+<h3 class="font-bold text-lg text-brand-dark leading-tight mb-1">Paneer Tikka Masala</h3>
+<p class="text-sm text-gray-600 mb-2 leading-snug">Paneer tikka masala with with paneer tikka eveator and taxartos.</p>
+<p class="font-bold text-xl text-brand-dark">$60</p>
+</div>
+</article>
+<!-- Menu Item 4 -->
+<article class="flex items-start space-x-4 border-b border-gray-200 pb-4 sm:border-none sm:pb-0 sm:pr-4 sm:last:border-r-0">
+<img alt="Dal Makhani" class="menu-item-image flex-shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxza2eRinfTbkDOyQvAnQG9Gu44IikX1fiwtqJ6scrc6z9190rEaXgy8nhRmd3fd03mOc6DjcWu8xH6w3uDjZHeL5n5HG941Bg15H9JQ8uoW5z8t9GDGI9gp0R8ud7npV-jWElCLs_CyzDjSNMwgq7-hCr9ND-eA5i0oxDqYRsvQPyBEdLh73SwSTkNwSTaK7PCyVQg_0yW_vIMEMBWKarZ25sbAoYJkjLPRo4IJNnqfkLfKNY833l"/>
+<div>
+<h3 class="font-bold text-lg text-brand-dark leading-tight mb-1">Dal Makhani</h3>
+<p class="text-sm text-gray-600 mb-2 leading-snug">Dal makhani with maro and vegetablis, dal enjoys and sarmani.</p>
+<p class="font-bold text-xl text-brand-dark">$35</p>
+</div>
+</article>
+<!-- Menu Item 5 -->
+<article class="flex items-start space-x-4 border-b border-gray-200 pb-4 sm:border-none sm:pb-0 sm:pr-4 sm:border-r sm:last:border-r-0 lg:border-r">
+<img alt="Butter Naan" class="menu-item-image flex-shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgnoqB9T0s6v6F1Wgnph6rVL4D4yWbP_VKuF0BO7VwnwGRXt_DPpzEjelmOwGg0yCRljF2ULF550zNxvq4EthTdnhgPgar9uKKiF6pKWnsjhSeI3a89CX5OlLb5P18BejBC2CyMRlf5LGH4-8G7PNQIEfwpQJGX5l8bBErXVZof_LtAiK9QD0x7ChSeIjx6ak87C5GPl4L1OTAHf_Aa2C70rEhWybnXaVYW7cG6_ndN0HPWhhu9F48"/>
+<div>
+<h3 class="font-bold text-lg text-brand-dark leading-tight mb-1">Butter Naan</h3>
+<p class="text-sm text-gray-600 mb-2 leading-snug">Eturrated raliia butter naan, shoid stolled with butter naan.</p>
+<p class="font-bold text-xl text-brand-dark">$10</p>
+</div>
+</article>
+<!-- Menu Item 6 -->
+<article class="flex items-start space-x-4 border-b border-gray-200 pb-4 sm:border-none sm:pb-0 sm:pr-4 sm:border-r sm:last:border-r-0 lg:border-r">
+<img alt="Raita" class="menu-item-image flex-shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXzce1ifWaZ5_KFz0ThyST46xHZtk9An939VpI6-qAhXhs_zDHqLm7maXD1xKCLJGKzXukw5BJN8zkSzKpqLoY9GeQ395DMPnxCbn9sDMj9CJfytHREVl8et8gnm_kqrUVVZ1U-Jt6cW3oQyqoF2h0yqtRvW7TxngSEZOanLDuxibK1HUaR8QpGXLBqvSoPDMjCAAfs_SlxIRoqByXAiJWtFUdF1sSo2ahaUZV0QzLtxGFlfJp3gUd"/>
+<div>
+<h3 class="font-bold text-lg text-brand-dark leading-tight mb-1">Raita</h3>
+<p class="text-sm text-gray-600 mb-2 leading-snug">Raita is imned tvsiit-only with marsa, oriz saita and araunds.</p>
+<p class="font-bold text-xl text-brand-dark">$15</p>
+</div>
+</article>
+<!-- Menu Item 7 -->
+<article class="flex items-start space-x-4 border-b border-gray-200 pb-4 sm:border-none sm:pb-0 sm:pr-4 sm:border-r sm:last:border-r-0 lg:border-r">
+<img alt="Gulab Jamun" class="menu-item-image flex-shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDfhzuGPWg7gRemI0HUChBzQHwIwWtJJcZAvYO2Ne5OqYR0o6mm44teuFBtwVaI7TOY9et2pgClbxJGA7f35M_91RpQcTnGsFfXEkFpznN0uAa7czYOrbhJhYWt9LLLlSkuXJGSVQJpkmBaEsJlPPLp6OpN-baYtQTRsAKgGVuJQLpxQuXyTeVr3aktKuEoHeBBUgMDDTaJtCOIW67fv6tkaE5DCfOHU3VHeuru5DVd-dEz4dF3ipym"/>
+<div>
+<h3 class="font-bold text-lg text-brand-dark leading-tight mb-1">Gulab Jamun</h3>
+<p class="text-sm text-gray-600 mb-2 leading-snug">Gulab jamun comlotst in pero anamr-ottwashing and samjusta.</p>
+<p class="font-bold text-xl text-brand-dark">$25</p>
+</div>
+</article>
+<!-- Menu Item 8 -->
+<article class="flex items-start space-x-4 border-b border-gray-200 pb-4 sm:border-none sm:pb-0 sm:pr-4 sm:last:border-r-0">
+<img alt="Mango Lassi" class="menu-item-image flex-shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDpEp4LNQMcDjuZ0HDdUfDDZNO-otPxFAEkL1yBZL8d36HvtB-db6NBiN_Ar52SdeT_T_B9J53ssSYaujzN58OWVGXPZJ7PLV29FMizjqXmaY1xo_WkdPZWSys_kTizfTECKHt0EO-QIIsiWMNOvVitqyCHGHdnQtbGyRe31PJOHKOm97HC7irTTf14WMDuR092F1V6fXomUos_7ZwGpr5a7KWlIbNPXPkCFXhhdmt-xv0_mCzn8fw"/>
+<div>
+<h3 class="font-bold text-lg text-brand-dark leading-tight mb-1">Mango Lassi</h3>
+<p class="text-sm text-gray-600 mb-2 leading-snug">Mango lassi with cansy and mango and mango lassi.</p>
+<p class="font-bold text-xl text-brand-dark">$15</p>
+</div>
+</article>
+</div>
+</main>
+<!-- END: Menu Section -->
+<!-- BEGIN: Footer -->
+<footer class="mt-12 border-4 border-brand-dark rounded-xl overflow-hidden p-6 text-brand-dark">
+<h2 class="text-2xl font-bold text-center mb-6">Contact Us</h2>
+<div class="flex flex-col sm:flex-row flex-wrap justify-between items-center gap-4">
+<div class="flex items-center space-x-3">
+<div class="bg-brand-dark p-2 rounded-full text-white">
+<svg class="h-5 w-5" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+<path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path>
+</svg>
+</div>
+<span class="font-semibold">+1 234 567 890</span>
+</div>
+<div class="flex items-center space-x-3">
+<div class="bg-brand-dark p-2 rounded-full text-white">
+<svg class="h-5 w-5" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+<path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+<path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+</svg>
+</div>
+<span class="font-semibold">info@cleangourmet.com</span>
+</div>
+<div class="flex items-center space-x-3">
+<div class="bg-brand-dark p-2 rounded-full text-white">
+<svg class="h-5 w-5" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" fill-rule="evenodd"></path>
+</svg>
+</div>
+<span class="font-semibold text-center sm:text-left">123 Gourmet Street, City, State</span>
+</div>
+</div>
+</footer>
+<!-- END: Footer -->
+</div>
+</body></html>

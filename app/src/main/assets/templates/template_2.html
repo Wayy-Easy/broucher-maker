@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gusto Fine Dining Menu</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&amp;family=Lato:wght@300;400&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              bg: '#540B1E', // Deep burgundy/maroon
+              gold: '#E3B272',
+              text: '#F5EBE1',
+            }
+          },
+          fontFamily: {
+            serif: ['"Playfair Display"', 'serif'],
+            sans: ['Lato', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-utilities">
+    body {
+      background-color: #540B1E;
+      color: #F5EBE1;
+      font-family: 'Lato', sans-serif;
+      /* Add the decorative circular graphic as a background */
+      background-image: radial-gradient(circle at 120% 120%, #F59E0B 0%, #D97706 20%, transparent 40%),
+                        radial-gradient(circle at 100% 100%, #540B1E 0%, #540B1E 20%, transparent 40%);
+      background-size: 200% 200%;
+      background-repeat: no-repeat;
+      background-position: bottom right;
+      background-attachment: fixed;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased min-h-screen flex flex-col relative overflow-x-hidden" style="background-color: #540B1E; color: #F5EBE1;">
+<!-- BEGIN: HeaderSection -->
+<header class="pt-12 pb-8 px-6 text-center z-10">
+<h1 class="font-serif text-4xl md:text-5xl lg:text-6xl text-brand-gold tracking-wide mb-2 uppercase">Gusto Fine Dining</h1>
+<h2 class="font-sans text-lg md:text-xl text-brand-gold tracking-widest uppercase">Main Entrees</h2>
+</header>
+<!-- END: HeaderSection -->
+<!-- BEGIN: MainContent -->
+<main class="flex-grow px-6 pb-20 z-10 max-w-3xl mx-auto w-full">
+<div class="space-y-12">
+<!-- Menu Item 1 -->
+<article class="flex flex-col sm:flex-row gap-6 items-start">
+<div class="w-full sm:w-1/2 flex-shrink-0">
+<img alt="Herb Crust Ribeye" class="w-full h-auto object-cover rounded-2xl shadow-lg aspect-[4/3] sm:aspect-auto" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9unyeq36XNQlBZ3mdsbTbSuoPMAXHBbxgyT9A1B_zIqhEQ2J5ixE06zGaqk3i3VB7o8q-uwUKnhAPMkM_NCvxWCWWun8qR7NA2t3wiMS4tm3X7Tc82EDrL3P-Obm1utbrj_IpL8bR-FEtD4ClA-aqlHkk-FVbRQh-rFfYiEovdhAKL3K9fWteG7m9cbWisWcRXne_EyT_k2itwovbaQq3BCEGbJPyLTnKot4CqDYY4_-V5gYmsdvp"/>
+</div>
+<div class="w-full sm:w-1/2 flex flex-col justify-center h-full">
+<h3 class="font-serif text-2xl text-brand-gold mb-2">Herb Crust Ribeye</h3>
+<p class="text-sm leading-relaxed mb-3 opacity-90">A high-quality reared crust ribeye seasoned for 10 min with salt and and end cream.</p>
+<span class="font-serif text-xl text-brand-gold">$30.00</span>
+</div>
+</article>
+<!-- Menu Item 2 -->
+<article class="flex flex-col sm:flex-row gap-6 items-start">
+<div class="w-full sm:w-1/2 flex-shrink-0">
+<img alt="Pan-Seared Salmon" class="w-full h-auto object-cover rounded-2xl shadow-lg aspect-[4/3] sm:aspect-auto" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAq0f62EmbuWRSuL1q_YgoE9-U2xW1kgVzG-vxcnhB8QwXYPXwgB7cEGUwCCFVx2X4AD0745-ntJ-CxIODp_SdxavCXwcXRwHKABpQA3CB2cFPIAh__xkUFWVP9A1vxMu5zxvASWrGeb-W5l67QiN59FMXFQnC-41betGYaA0pZVVTFzadM8qYaifSRTV8Z7HBjkQIZY6qvuT7iflELlYj1zE9M3BU7fwwDXaUOcggYgmnOAv1_Gv0T"/>
+</div>
+<div class="w-full sm:w-1/2 flex flex-col justify-center h-full">
+<h3 class="font-serif text-2xl text-brand-gold mb-2">Pan-Seared Salmon</h3>
+<p class="text-sm leading-relaxed mb-3 opacity-90">A side of lemon, pan-seared salmon, and combined with tangy crunch and signature salmon.</p>
+<span class="font-serif text-xl text-brand-gold">$14.00</span>
+</div>
+</article>
+<!-- Menu Item 3 -->
+<article class="flex flex-col sm:flex-row gap-6 items-start">
+<div class="w-full sm:w-1/2 flex-shrink-0">
+<img alt="Truffle Pasta" class="w-full h-auto object-cover rounded-2xl shadow-lg aspect-[4/3] sm:aspect-auto" src="https://lh3.googleusercontent.com/aida-public/AB6AXuALBpp9y-Y2G_rHFUjdg7-IMkN8UMdHtXGfIkLSig4oYf-zyiGkJY22qnLnqnWw_IN98Vf7822edMMuedIvgagW2QKvCEdrWkA0L05VCBsj90shSEDQ7hvT8cdl6vwnqR5NjgNmxthmDJG8k8PJZaftigczvHQ578e4zkKgQsmkP4G_qKLjpM3EuqSXUNtMwihrM7dleQBgDVfSlXML85GLWu67XOVcVAW5txOtycBT8vePcZPwrCx2"/>
+</div>
+<div class="w-full sm:w-1/2 flex flex-col justify-center h-full">
+<h3 class="font-serif text-2xl text-brand-gold mb-2">Truffle Pasta</h3>
+<p class="text-sm leading-relaxed mb-3 opacity-90">Delicious truffle-seared aroma with truffle pasta, semi-rustic smooth, sauteed pasta.</p>
+<span class="font-serif text-xl text-brand-gold">$17.00</span>
+</div>
+</article>
+<!-- Menu Item 4 -->
+<article class="flex flex-col sm:flex-row gap-6 items-start">
+<div class="w-full sm:w-1/2 flex-shrink-0">
+<img alt="Confit Duck" class="w-full h-auto object-cover rounded-2xl shadow-lg aspect-[4/3] sm:aspect-auto" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDg_-62NMP7fALqUaXWG98bdOqpl8QwL3uEH9PyM3PXx6_83mAD8BITy_INuUH1vot_itwj95E3vx6CEiputitVWZZ8zGItGfmqjRPvfHcl1oSgVAZI_FsYrg0FhRPnLTKOUPb376uODwWhAt9Uy5CdzJr1-ts9CspXX7xw7TG3blKlx8_V8vR6CasXdoJHeOjQ-0WoUOXtr6BSq6BYzzx2vTFKa_fAKlBIsf7NuGU31AW7Kpnc6j7P"/>
+</div>
+<div class="w-full sm:w-1/2 flex flex-col justify-center h-full">
+<h3 class="font-serif text-2xl text-brand-gold mb-2">Confit Duck</h3>
+<p class="text-sm leading-relaxed mb-3 opacity-90">A side of sous vide with picked onions, despised of confit duck, sauce, and lemon sauce.</p>
+<span class="font-serif text-xl text-brand-gold">$15.00</span>
+</div>
+</article>
+</div>
+</main>
+<!-- END: MainContent -->
+<!-- BEGIN: FooterSection -->
+<footer class="py-6 px-4 text-center z-10 mt-auto">
+<p class="text-xs text-brand-gold opacity-80 max-w-md mx-auto leading-relaxed">
+      +1234 567 890  |  info@deliciousfastfood.com<br class="sm:hidden"/>
+<span class="hidden sm:inline"> | </span>
+      123 Food Street, City, State
+    </p>
+</footer>
+<!-- END: FooterSection -->
+</body></html>

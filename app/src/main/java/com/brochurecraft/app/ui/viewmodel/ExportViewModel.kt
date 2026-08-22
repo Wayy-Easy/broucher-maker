@@ -13,8 +13,11 @@ import com.brochurecraft.app.data.model.DesignJson
 import com.brochurecraft.app.data.repository.DesignRepository
 import com.brochurecraft.app.util.ExportFormat
 import com.brochurecraft.app.util.ExportManager
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -24,6 +27,16 @@ class ExportViewModel(private val repo: DesignRepository) : ViewModel() {
         private set
     var canvasState by mutableStateOf(DesignCanvasState())
         private set
+
+    var isHtmlMode by mutableStateOf(false)
+        private set
+    var htmlContent by mutableStateOf<String?>(null)
+        private set
+
+    private val _captureRequest = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val captureRequest: SharedFlow<Unit> = _captureRequest.asSharedFlow()
+
+    var capturedBitmap by mutableStateOf<android.graphics.Bitmap?>(null)
 
     var format by mutableStateOf(ExportFormat.PDF)
     var qualityPercent by mutableStateOf(1f) // 0f=Web,0.5f=Standard,1f=Print(300dpi)
@@ -36,8 +49,20 @@ class ExportViewModel(private val repo: DesignRepository) : ViewModel() {
         viewModelScope.launch {
             val entity = repo.getById(id)
             design = entity
-            canvasState = DesignJson.decode(entity?.elementsJson)
+            val json = entity?.elementsJson
+            if (json != null && json.startsWith("html:")) {
+                isHtmlMode = true
+                htmlContent = json.removePrefix("html:")
+                canvasState = DesignCanvasState() // Ensure sheetSize is default or loaded
+            } else {
+                isHtmlMode = false
+                canvasState = DesignJson.decode(json)
+            }
         }
+    }
+
+    fun setSheetSize(size: com.brochurecraft.app.data.model.SheetSize) {
+        canvasState = canvasState.copy(sheetSize = size)
     }
 
     fun qualityLabel(): String = when {
@@ -46,15 +71,27 @@ class ExportViewModel(private val repo: DesignRepository) : ViewModel() {
         else -> "High (300dpi)"
     }
 
+    fun requestCapture() {
+        viewModelScope.launch { _captureRequest.emit(Unit) }
+    }
+
     fun export(context: Context): File {
-        val dims = if (qualityPercent < 0.34f) 540 to 756 else if (qualityPercent < 0.67f) 800 to 1120 else 1080 to 1512
+        val baseWidth = 1080f
+        val aspectRatio = canvasState.sheetSize.aspectRatio
+        val baseHeight = baseWidth / aspectRatio
+        
+        val scale = if (qualityPercent < 0.34f) 0.5f else if (qualityPercent < 0.67f) 0.75f else 1.0f
+        val widthPx = (baseWidth * scale).toInt()
+        val heightPx = (baseHeight * scale).toInt()
+
         val file = ExportManager.export(
             context = context,
             state = canvasState,
             fileBaseName = design?.name ?: "brochurecraft_design",
             format = format,
-            widthPx = dims.first,
-            heightPx = dims.second
+            widthPx = widthPx,
+            heightPx = heightPx,
+            htmlBitmap = capturedBitmap
         )
         _exportedFile.value = file
         return file

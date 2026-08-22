@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Bercelle Restaurant Menu</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style data-purpose="custom-colors-fonts">
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600;700&display=swap');
+    
+    :root {
+      --color-lime: #93c83e;
+      --color-mid-green: #297a38;
+      --color-dark-green: #155b26;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    .font-serif-brand {
+      font-family: 'Playfair Display', serif;
+    }
+
+    /* Wavy Backgrounds using SVG */
+    .bg-wave-top-left {
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%23155b26' d='M0,0 L100,0 L100,5 C75,20 25,-10 0,15 Z' opacity='0.2'/%3E%3C/svg%3E");
+      background-size: cover;
+      background-position: top;
+      background-repeat: no-repeat;
+    }
+
+    .bg-wave-bottom-left {
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%23155b26' d='M0,20 L100,20 L100,15 C75,0 25,30 0,5 Z' opacity='0.3'/%3E%3C/svg%3E");
+      background-size: cover;
+      background-position: bottom;
+      background-repeat: no-repeat;
+    }
+    
+    .bg-wave-top-right {
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%2393c83e' d='M0,0 L100,0 L100,10 C75,20 25,-5 0,10 Z' opacity='0.5'/%3E%3C/svg%3E");
+        background-size: cover;
+        background-position: top;
+        background-repeat: no-repeat;
+    }
+  </style>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              lime: '#93c83e',
+              mid: '#297a38',
+              dark: '#155b26',
+            }
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+<!-- BEGIN: Main Brochure Container -->
+<main class="w-full max-w-[1200px] flex flex-col md:flex-row shadow-2xl rounded-lg overflow-hidden">
+<!-- BEGIN: Left Panel (Hero) -->
+<section class="flex-1 bg-brand-lime bg-wave-top-left bg-wave-bottom-left p-8 flex flex-col items-center justify-between min-h-[600px] relative">
+<div class="text-center mt-8">
+<h1 class="font-serif-brand text-4xl md:text-5xl text-white font-bold leading-tight drop-shadow-md">
+          Bercelle<br/>Restaurant
+        </h1>
+</div>
+<div class="w-64 h-64 md:w-80 md:h-80 rounded-full border-4 border-white/30 shadow-xl overflow-hidden my-8">
+<!-- Main Signature Dish Image -->
+<img alt="Signature Salad" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZ5VXgg_mqOfP8C-cdwIgvSK3bUEJ75Kvtqyo-Xpi-4Z6QccIWBYbeNKuJR2oTUeTOeDgoPfoAC-gez7skrJ0k-koQ2VX0tC9-Cr7QKLv2Srjg_QK21N_RY2-uQ0DQ7LvuJeV0sbkk7yDBy1u3rkDc24CqpSWFYpx3WtUnix9LB-dB0ZatacJ6-v8aDe0JVpr9SAcTU3upGT0qH8kgkZVvX62bnoofWx8K2FCtTZnz-3XsYv9T0EQA"/>
+</div>
+<div class="text-center mb-8">
+<h2 class="text-2xl font-bold text-brand-dark mb-4 drop-shadow-sm">Signature Salad</h2>
+<button class="bg-brand-dark text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-opacity-90 transition transform hover:scale-105">
+          ORDER NOW
+        </button>
+</div>
+</section>
+<!-- END: Left Panel -->
+<!-- BEGIN: Middle Panel (Best Seller) -->
+<section class="flex-1 bg-brand-mid p-8 flex flex-col pt-12 relative overflow-hidden">
+<!-- Top Wave Decor -->
+<div class="absolute top-0 left-0 w-full h-16 bg-white opacity-10" style="clip-path: ellipse(80% 100% at 50% 0%);"></div>
+<h2 class="text-white text-2xl font-bold text-center mb-10 tracking-wide">BEST SELLER<br/>MENU</h2>
+<div class="flex flex-col gap-8 flex-grow justify-center">
+<!-- Item 1 -->
+<div class="flex items-center gap-4">
+<div class="w-24 h-24 rounded-full border-2 border-white/50 flex-shrink-0 overflow-hidden shadow-md">
+<img alt="Buddha Bowl" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDC5bv7CPGcUkgBd9H0_UyviMJ_cDDDvct2Q-ksYzX4cuTnZLdU5zcFrGgNjQJ0aLcclwdtmZCIgJd6wvHEfP7Hejcwi-iLkL5TIMPqzdXRUGc9VOaUCX19Sesp4_DNgLSbXDxqRMRsJjP6SB4du8FfRjA_OqPqhgeSmBn7kf_dH598on9rjf1vTj3Ju9YZLiF5-VlagImdIdrRTCa_d26AvzOMUMayr3p9sf_lLIPE12AlYfHeo5y0"/>
+</div>
+<div>
+<h3 class="text-white font-bold text-lg leading-tight">Buddha<br/>bowl</h3>
+<p class="text-white/80 text-xs mt-1 leading-tight w-3/4">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="flex items-center gap-4 flex-row-reverse text-right">
+<div class="w-24 h-24 rounded-full border-2 border-white/50 flex-shrink-0 overflow-hidden shadow-md">
+<img alt="Salmon Asparagus" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAe2G1hm5MhC6u_tQ4ASxdlrybH24TTTMLO7Vsnnk5Ja78P2nCfKK-6Ge3NNxzykV2yW7y7YwnsoSHXf4YqN0WGCgD8_BACwR_lY5ZAYmaC0ULZl145Mi9PSZCaLx87sbkpGR0yZ2NnfUjLLZl9OhTbh5HXa3i7TGWddaTUzDqCsVnkKL7K9FOGVdJlMCx2m_zZB6mBiXUCIA8qXnjQQAEw7DZq98QVi5NNvPjTU1s10hPROZpG4380"/>
+</div>
+<div>
+<h3 class="text-white font-bold text-lg leading-tight">Salmon<br/>Asparagus</h3>
+<p class="text-white/80 text-xs mt-1 leading-tight ml-auto w-3/4">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="flex items-center gap-4">
+<div class="w-24 h-24 rounded-full border-2 border-white/50 flex-shrink-0 overflow-hidden shadow-md">
+<img alt="Berry Smoothie" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIaXJUed5PdZakUxwmvd_YcLn1rmi6SQgqMEJiCmHVdpkN0LfI2yZxCa3bobIsHi0xI5bll6qR1G199bce7npd02-Ndf4GJhgLFMQZrPkRnvObhV3J--sAGBiQa3K8rGgjeb8HUfsp6n8IZ_7KbdMtrkiCgttMGkUF1PzHFKbf5TemooAkUlTmStRayieTmyQ_F_PyrW8uGDDhH_LIMt9p1fqcRdnKUFjV7oIz4lRM71yAwcLuU9kS"/>
+</div>
+<div>
+<h3 class="text-white font-bold text-lg leading-tight">Berry<br/>Smoothie</h3>
+<p class="text-white/80 text-xs mt-1 leading-tight w-3/4">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- END: Middle Panel -->
+<!-- BEGIN: Right Panel (Special Menu) -->
+<section class="flex-1 bg-brand-dark bg-wave-top-right p-8 flex flex-col pt-12 relative overflow-hidden">
+<!-- Bottom Wave Decor -->
+<div class="absolute bottom-0 left-0 w-full h-32 bg-brand-lime opacity-80" style="clip-path: ellipse(70% 80% at 50% 100%); z-index: 0;"></div>
+<div class="relative z-10 flex flex-col h-full">
+<h2 class="text-white text-2xl font-bold text-center mb-10 tracking-wide">SPECIAL MENU<br/>FOR YOU</h2>
+<div class="flex flex-col gap-6 flex-grow justify-center">
+<!-- Card 1 -->
+<div class="bg-white rounded-2xl p-3 flex gap-4 items-center shadow-lg transform hover:-translate-y-1 transition duration-300">
+<div class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-gray-200">
+<img alt="Green Detox Salad" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHWQd-RDV2S4jc-niLZHCkR9BJHGBU_H5Xz82sIxZ0EBQiKnI1eqpK3zN0wFo4p7VQMMP0bjySk59QoAVV8ZSzU2-m7irrjZWnOw6JK_MC2H4V1xcgL73cdzIRftz_xluAYyudQ36FOVjAwF5IT6PMOXJxpbnNAdcqDFsjqCwitz3WR0xq_sBfjj8siy4SLYWdQVmsjLPCbZNvImJkJCleWADMHVN0edWpgDuKRDsO5cfe6etPXQfM"/>
+</div>
+<div class="flex-grow">
+<h3 class="font-bold text-brand-dark text-[15px] leading-tight mb-1">Green Detox<br/>Salad - $12</h3>
+<p class="text-gray-500 text-[10px] leading-tight mb-2">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+<span class="inline-block bg-brand-mid text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-sm">$12</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-white rounded-2xl p-3 flex gap-4 items-center shadow-lg transform hover:-translate-y-1 transition duration-300">
+<div class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-gray-200">
+<img alt="Protein Power Plate" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-K2ERXWoMhbvHNEwBapnxPWHoGUJOsj8zaURJXZBuxJy-j1KyPG1xS6xsgmBVAYMe74bFEq4Wsp5EA-hOcAuHuAF0NbMIvP82vSNalt9qcAABvLen_PN3jYEBCwfNCh9A-Mwik_fHEKIG_smNEM2ZL_r5Pj3-6CYpzlKlEJXtaEu1qvnoAOyCqAudOCsO1QZl81kcTUfxyBfxSPigMFl6jk_R-mDzAuqNfvGHC9nvk99T7lYb1KzG"/>
+</div>
+<div class="flex-grow">
+<h3 class="font-bold text-brand-dark text-[15px] leading-tight mb-1">Protein Power<br/>Plate - $15</h3>
+<p class="text-gray-500 text-[10px] leading-tight mb-2">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+<span class="inline-block bg-brand-mid text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-sm">$15</span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-white rounded-2xl p-3 flex gap-4 items-center shadow-lg transform hover:-translate-y-1 transition duration-300">
+<div class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-gray-200">
+<img alt="Organic Acai Bowl" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5_aEg0GlV2-b8shjf5-jAxUVaZqoxR2XNTXqVMTVaHvMe5YWXpVxIxwLycg6DdDKGL85BizZpveA9AsbUjE8gJ_kR18vMfrRSFMCUCAhLzSov4X7oHpoZ230k89m30uJfM0uNw_sKRhRPwR9Wlbz7OjEJxJzOe-SemBUQU7KDkecwB7-2uelK1VRno2aovK5IJHweXMFZnprHRP2fMNNt4K3lxKkc2QQNCSwmviaxD3x13BLbA2ZM"/>
+</div>
+<div class="flex-grow">
+<h3 class="font-bold text-brand-dark text-[15px] leading-tight mb-1">Organic Acai<br/>Bowl - $10</h3>
+<p class="text-gray-500 text-[10px] leading-tight mb-2">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+<span class="inline-block bg-brand-mid text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-sm">$10</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- END: Right Panel -->
+</main>
+<!-- END: Main Brochure Container -->
+</body></html>

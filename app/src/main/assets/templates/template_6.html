@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gusto Fine Dining Menu</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;family=Lato:wght@300;400;700&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            burgundy: '#4A0E23',
+            burgundyDark: '#320816',
+            gold: '#D4AF37',
+            goldLight: '#E8CA6B',
+            orangeAccent: '#E67E22'
+          },
+          fontFamily: {
+            serif: ['"Playfair Display"', 'serif'],
+            sans: ['Lato', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="background-graphic">
+    .bg-circle {
+      position: fixed;
+      bottom: -150px;
+      right: -150px;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      border: 60px solid #E67E22;
+      opacity: 0.4;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .bg-circle-top {
+      position: fixed;
+      top: -150px;
+      left: -150px;
+      width: 350px;
+      height: 350px;
+      border-radius: 50%;
+      border: 40px solid #D4AF37;
+      opacity: 0.15;
+      z-index: 0;
+      pointer-events: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: 100dvh;
+    }
+  </style>
+</head>
+<body class="bg-burgundy text-goldLight font-sans min-h-screen relative overflow-x-hidden antialiased">
+<!-- Background decorative elements -->
+<div aria-hidden="true" class="bg-circle"></div>
+<div aria-hidden="true" class="bg-circle-top"></div>
+
+<div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-8 md:px-12 py-8 flex flex-col min-h-screen">
+  
+  <!-- BEGIN: HeaderSection -->
+  <header class="text-center mb-10 md:mb-16 mt-4 sm:mt-8 border-b border-gold/20 pb-8">
+    <span class="text-xs sm:text-sm font-sans tracking-[0.3em] text-orangeAccent uppercase block mb-2 font-bold">An Exquisite Culinary Experience</span>
+    <h1 class="text-3xl sm:text-5xl lg:text-6xl font-serif font-bold text-gold mb-3 tracking-wider uppercase">Gusto Fine Dining</h1>
+    <div class="flex items-center justify-center gap-4 mt-4">
+      <span class="h-[1px] w-12 sm:w-20 bg-gold/40"></span>
+      <h2 class="text-base sm:text-xl font-sans tracking-[0.25em] font-light text-goldLight uppercase">Main Entrees</h2>
+      <span class="h-[1px] w-12 sm:w-20 bg-gold/40"></span>
+    </div>
+  </header>
+  <!-- END: HeaderSection -->
+
+  <!-- BEGIN: MainMenuContent -->
+  <main class="flex-1 space-y-12 lg:space-y-16">
+    
+    <!-- Featured Item: Herb Crust Ribeye (Hero Layout on Large Screens) -->
+    <article class="bg-burgundyDark/60 backdrop-blur-sm rounded-3xl p-5 sm:p-8 border border-gold/30 shadow-2xl transition-all duration-300 hover:border-gold/50">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center">
+        <div class="lg:col-span-7 w-full aspect-[4/3] sm:aspect-[16/9] lg:aspect-[4/3] rounded-2xl overflow-hidden shadow-xl border border-gold/20">
+          <img alt="Herb Crust Ribeye" class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDg7KJCj1fILtyuNoG41mQ6gZo_P7AWLxQFWSLNXvAbeWKUyB5GQjbLlATggJALpQsyDsnj1r8dJJiQVsKT5wq2GZra3dCgyFEtzEOgP2iCLNj2gYOok029U3ghQn8BiSUG97LHM8D06ghA2BH2HrkUPiCKRkbS4st6F2RX1ApgvCdzyGnPVY3PkrR0fmh6QW8KXxIfCc8aNK8wHXlyiGRyr1656ybSje-nUHA5sFRRqAJILD6KG-tZ"/>
+        </div>
+        <div class="lg:col-span-5 flex flex-col justify-center">
+          <span class="inline-block text-xs font-bold uppercase tracking-widest text-orangeAccent bg-orangeAccent/10 border border-orangeAccent/30 rounded-full px-3 py-1 w-max mb-3">Chef's Signature</span>
+          <div class="flex justify-between items-baseline gap-4 mb-2">
+            <h3 class="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold text-gold">Herb Crust Ribeye</h3>
+            <p class="text-2xl sm:text-3xl font-serif font-bold text-gold shrink-0">$30.00</p>
+          </div>
+          <p class="text-sm sm:text-base font-light leading-relaxed mb-6 opacity-90 text-goldLight/90">
+            A high quality reared crust ribeye served over a main with short and end cream.
+          </p>
+          <div class="pt-4 border-t border-gold/15 flex items-center justify-between text-xs tracking-wider uppercase text-gold/70 font-sans">
+            <span>Pairs with Cabernet Sauvignon</span>
+            <span>Prime Cut</span>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Standard Items Grid: Responsive 1-col (Mobile), 2-col (Tablet), 3-col (Desktop) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-8">
+      
+      <!-- Standard Item: Pan-Seared Salmon -->
+      <article class="bg-burgundyDark/40 backdrop-blur-sm rounded-2xl p-5 border border-gold/20 shadow-lg flex flex-col justify-between hover:border-gold/40 transition-all duration-300">
+        <div>
+          <div class="w-full aspect-[16/10] rounded-xl overflow-hidden shadow-md border border-gold/20 mb-4">
+            <img alt="Pan-Seared Salmon" class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnS7zSL1TUOFrAfYv7sblJ8XnJQ1WpwUdkK8GNjhfe_g7L-hxhJcF0T02-FnwE7nJAWZW8-c5_WRw0T5cxBCYQ628Vk1HRZngjdxRkEfcBO_KCGJwJYiCEGhu09KGJbRYb5TLlV28GSyJrqkUhHcZYSbXMEi5KXv1Y-SPDFTOVNU9_ZqhY_6Rwe8KQDANLoel45mnlLNwKmmI0fmZHR5uLkItolRiZ0RuYYYKu1Fv-VjNXhD9RsAvo"/>
+          </div>
+          <div class="flex justify-between items-baseline gap-2 mb-2">
+            <h3 class="text-xl font-serif font-semibold text-gold">Pan-Seared Salmon</h3>
+            <p class="text-lg font-serif font-bold text-gold shrink-0">$14.00</p>
+          </div>
+          <p class="text-sm font-light leading-relaxed mb-4 opacity-90 text-goldLight/90">
+            A side of seared, pan-seared salmon, and composed with ginger crunch and signature salmon sauce.
+          </p>
+        </div>
+        <div class="pt-3 border-t border-gold/10 text-xs text-gold/60 tracking-wider">
+          Gluten-Free Available
+        </div>
+      </article>
+
+      <!-- Standard Item: Truffle Pasta -->
+      <article class="bg-burgundyDark/40 backdrop-blur-sm rounded-2xl p-5 border border-gold/20 shadow-lg flex flex-col justify-between hover:border-gold/40 transition-all duration-300">
+        <div>
+          <div class="w-full aspect-[16/10] rounded-xl overflow-hidden shadow-md border border-gold/20 mb-4">
+            <img alt="Truffle Pasta" class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEJ5eUF2egcDhofb2nVY1EsSetO_vV_JQSa6PXLJ3lbs3AjmwLCstl-UpHTGoC8GH7_QjFscvOdcauT68dHDg4u0ISuUNngFgIlxK5GNoi38wVX42HDqgXST59ZcL24M4Q6_Qao-OJIWc4TIlYF6w6a9_lS-yVTp7uaZJoE-636wL717Ux2Ldkdk9jZgZLAuWPAPqfWcawFFIf2K9Ab1GJadbJtZ4zLc668wNG3BuqOHRCH5TCJrhu"/>
+          </div>
+          <div class="flex justify-between items-baseline gap-2 mb-2">
+            <h3 class="text-xl font-serif font-semibold text-gold">Truffle Pasta</h3>
+            <p class="text-lg font-serif font-bold text-gold shrink-0">$17.00</p>
+          </div>
+          <p class="text-sm font-light leading-relaxed mb-4 opacity-90 text-goldLight/90">
+            Delicious truffle-seared ornaments with truffle pasta, served with rustic mossin, stressed pasta.
+          </p>
+        </div>
+        <div class="pt-3 border-t border-gold/10 text-xs text-gold/60 tracking-wider">
+          Vegetarian Selection
+        </div>
+      </article>
+
+      <!-- Standard Item: Confit Duck -->
+      <article class="bg-burgundyDark/40 backdrop-blur-sm rounded-2xl p-5 border border-gold/20 shadow-lg flex flex-col justify-between hover:border-gold/40 transition-all duration-300 md:col-span-2 lg:col-span-1">
+        <div>
+          <div class="w-full aspect-[16/10] rounded-xl overflow-hidden shadow-md border border-gold/20 mb-4">
+            <img alt="Confit Duck" class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgZxMlcgEbySAOooZKm45nkTlQdGN0jvGgukp5FlDJqcqNSfQN1JT0IE5BgCObc2HLuaPj8lJVfB_kQK2j1u6qDk1E_hRY0wuGKfsAjAnjS6f4lF2zf72Wpgl0P7njumo74UKlXrKRBqvtsKFgvB-Ojz_TLcMzhI1HmuuWwTZv5fgbeA0dELPi1QdZHwFOCc8ZnS8LTNcgrJrXZOs2JnmtW-dJdqSeVrei1o7DobSUCV6BIGEff4SH"/>
+          </div>
+          <div class="flex justify-between items-baseline gap-2 mb-2">
+            <h3 class="text-xl font-serif font-semibold text-gold">Confit Duck</h3>
+            <p class="text-lg font-serif font-bold text-gold shrink-0">$15.00</p>
+          </div>
+          <p class="text-sm font-light leading-relaxed mb-4 opacity-90 text-goldLight/90">
+            Pride of sous-vide throws with picked onions despised of confit duck, sauce, and lemonao sauce.
+          </p>
+        </div>
+        <div class="pt-3 border-t border-gold/10 text-xs text-gold/60 tracking-wider">
+          Slow Roasted
+        </div>
+      </article>
+
+    </div>
+  </main>
+  <!-- END: MainMenuContent -->
+
+  <!-- BEGIN: FooterSection -->
+  <footer class="mt-16 sm:mt-24 border-t border-gold/20 pt-8 pb-4 text-center">
+    <div class="flex flex-col md:flex-row justify-between items-center gap-4 text-xs sm:text-sm font-light opacity-80 max-w-4xl mx-auto">
+      <p class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-gold" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg>
+        +1234 567 890
+      </p>
+      <p class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-gold" fill="currentColor" viewBox="0 0 20 20"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg>
+        info@gustofinedining.com
+      </p>
+      <p class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-gold" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path></svg>
+        123 Food Street, City, State
+      </p>
+    </div>
+    <p class="mt-6 text-[10px] tracking-widest text-gold/40 uppercase">© Gusto Fine Dining. All rights reserved.</p>
+  </footer>
+  <!-- END: FooterSection -->
+
+</div>
+</body>
+</html>

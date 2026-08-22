@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [DesignEntity::class, TemplateEntity::class, BrandKitEntity::class],
-    version = 1,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -33,20 +33,32 @@ abstract class AppDatabase : RoomDatabase() {
                 INSTANCE ?: Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "brochurecraft.db"
-                ).addCallback(object : RoomDatabase.Callback() {
+                    "brochurecraft_final_v1.db"
+                ).fallbackToDestructiveMigration()
+                .addCallback(object : RoomDatabase.Callback() {
                     override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
                         super.onCreate(db)
-                        // Seed the local SQLite DB with starter templates + a
-                        // couple of sample designs so the app is fully usable offline.
-                        CoroutineScope(Dispatchers.IO).launch {
-                            val instance = INSTANCE ?: return@launch
-                            instance.templateDao().insertAll(SeedData.templates())
-                            instance.brandKitDao().upsert(BrandKitEntity())
-                            SeedData.sampleDesigns().forEach { instance.designDao().insert(it) }
-                        }
+                        // Trigger seeding when the database is first created
                     }
-                }).build().also { INSTANCE = it }
+
+                    override fun onDestructiveMigration(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                        super.onDestructiveMigration(db)
+                    }
+                }).build().also { 
+                    INSTANCE = it
+                    // Check if we need to seed
+                    seedIfEmpty(it)
+                }
+            }
+        }
+
+        private fun seedIfEmpty(db: AppDatabase) {
+            CoroutineScope(Dispatchers.IO).launch {
+                if (db.templateDao().count() == 0) {
+                    db.templateDao().insertAll(SeedData.templates())
+                    db.brandKitDao().upsert(BrandKitEntity())
+                    SeedData.sampleDesigns().forEach { db.designDao().insert(it) }
+                }
             }
         }
     }
