@@ -19,16 +19,25 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.brochurecraft.app.data.db.entity.TemplateEntity
+import com.brochurecraft.app.ui.components.HtmlDesignCanvas
 import com.brochurecraft.app.ui.theme.*
 import com.brochurecraft.app.ui.viewmodel.LambdaViewModelFactory
 import com.brochurecraft.app.ui.viewmodel.TemplateExplorerViewModel
 import com.brochurecraft.app.util.rememberApp
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun TemplateExplorerScreen(onOpenTemplate: (Long, String) -> Unit) {
@@ -92,16 +101,64 @@ fun TemplateExplorerScreen(onOpenTemplate: (Long, String) -> Unit) {
 
 @Composable
 private fun TemplateCard(template: TemplateEntity, onClick: () -> Unit) {
-    Column(modifier = Modifier.clickable { onClick() }) {
+    val context = LocalContext.current
+    Column(modifier = Modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(170.dp)
+                .height(200.dp)
                 .background(
                     Color(android.graphics.Color.parseColor(template.accentColorHex)).copy(alpha = 0.85f),
                     RoundedCornerShape(16.dp)
                 )
+                .border(1.dp, VCBorderSubtle, RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(16.dp))
         ) {
+            if (template.elementsJson.startsWith("html:")) {
+                val html = remember(template.elementsJson) {
+                    try {
+                        val assetName = template.elementsJson.removePrefix("html:")
+                        context.assets.open("templates/$assetName").bufferedReader().use { it.readText() }
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+                if (html != null) {
+                    Box(modifier = Modifier.fillMaxSize().padding(10.dp)) {
+                        key(template.id) {
+                            BoxWithConstraints(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+                                val boxScope = this
+                                val availableWidthPx = boxScope.constraints.maxWidth
+                                val density = androidx.compose.ui.platform.LocalDensity.current
+                                val designWidth = 1000
+                                val designWidthPx = with(density) { designWidth.dp.toPx() }
+                                val scaleFactor = availableWidthPx.toFloat() / designWidthPx
+
+                                Box(
+                                    modifier = Modifier
+                                        .size(width = designWidth.dp, height = (designWidth / 0.75f).dp)
+                                        .graphicsLayer {
+                                            scaleX = scaleFactor
+                                            scaleY = scaleFactor
+                                            transformOrigin = TransformOrigin(0f, 0f)
+                                        }
+                                ) {
+                                    HtmlDesignCanvas(
+                                        htmlContent = html,
+                                        jsCommands = remember { MutableStateFlow("").asSharedFlow() },
+                                        onElementSelected = {},
+                                        onHtmlUpdated = {},
+                                        isReadOnly = true,
+                                        viewportWidth = designWidth,
+                                        modifier = Modifier.fillMaxSize().background(Color.White)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             if (template.isPro) {
                 Row(
                     modifier = Modifier
@@ -129,6 +186,17 @@ private fun TemplateCard(template: TemplateEntity, onClick: () -> Unit) {
                     }
                 }
             }
+
+            // OVERLAY BOX: This is the most important part.
+            // It covers the entire card area, intercepting all clicks
+            // and preventing them from reaching the WebView.
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(16.dp))
+                    .clickable { onClick() }
+                    .zIndex(1f)
+            )
         }
         Spacer(Modifier.height(8.dp))
         Text(template.name, style = BodyLg, color = VCOnSurface, fontWeight = FontWeight.SemiBold)

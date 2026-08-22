@@ -15,17 +15,21 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.brochurecraft.app.ui.components.DesignCanvas
+import com.brochurecraft.app.ui.components.HtmlDesignCanvas
 import com.brochurecraft.app.ui.theme.*
 import com.brochurecraft.app.ui.viewmodel.ExportViewModel
 import com.brochurecraft.app.ui.viewmodel.LambdaViewModelFactory
 import com.brochurecraft.app.util.ExportFormat
 import com.brochurecraft.app.util.rememberApp
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
 @Composable
 fun ExportShareScreen(designId: Long, onBack: () -> Unit) {
@@ -34,6 +38,14 @@ fun ExportShareScreen(designId: Long, onBack: () -> Unit) {
     val vm: ExportViewModel = viewModel(factory = LambdaViewModelFactory { ExportViewModel(app.designRepository) })
 
     LaunchedEffect(designId) { vm.load(designId) }
+
+    LaunchedEffect(vm.capturedBitmap) {
+        if (vm.capturedBitmap != null) {
+            val file = vm.export(context)
+            context.startActivity(vm.shareIntent(context, file))
+            vm.capturedBitmap = null
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize().background(VCSurface)) {
         Row(
@@ -50,19 +62,106 @@ fun ExportShareScreen(designId: Long, onBack: () -> Unit) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .aspectRatio(vm.canvasState.sheetSize.aspectRatio)
                     .background(VCWorkspaceSurface, RoundedCornerShape(20.dp))
                     .border(1.dp, VCBorderSubtle, RoundedCornerShape(20.dp))
-                    .padding(12.dp)
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
             ) {
-                DesignCanvas(
-                    state = vm.canvasState,
-                    selectedId = null,
-                    onSelect = {},
-                    onDragStart = {},
-                    onElementMoved = { _, _, _ -> },
-                    onElementResized = { _, _, _ -> },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                val sheetSize = vm.canvasState.sheetSize
+                val designWidth = sheetSize.previewWidthPx
+
+                // Real rendered content height (dp) reported by the WebView, keyed off
+                // template+size so it resets cleanly when either changes.
+                var measuredContentHeight by remember(vm.htmlContent, designWidth) { mutableStateOf<Int?>(null) }
+
+                BoxWithConstraints(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    val boxScope = this
+                    val availableWidthPx = boxScope.constraints.maxWidth
+                    val availableHeightPx = boxScope.constraints.maxHeight
+                    val density = androidx.compose.ui.platform.LocalDensity.current
+
+                    val designHeight = measuredContentHeight
+                        ?: (designWidth / sheetSize.aspectRatio).toInt()
+
+                    val designWidthPx = with(density) { designWidth.dp.toPx() }
+                    val designHeightPx = with(density) { designHeight.dp.toPx() }
+
+                    // Contain-fit within the sheet frame using the template's REAL content
+                    // size, rather than assuming it always matches the frame's aspect ratio.
+                    val scaleFactor = if (vm.isHtmlMode) {
+                        minOf(availableWidthPx.toFloat() / designWidthPx, availableHeightPx.toFloat() / designHeightPx)
+                    } else {
+                        availableWidthPx.toFloat() / designWidthPx
+                    }
+
+                    val boxHeight = if (vm.isHtmlMode) designHeight.dp else (designWidth / sheetSize.aspectRatio).dp
+
+                    Box(
+                        modifier = Modifier
+                            .size(width = designWidth.dp, height = boxHeight)
+                            .graphicsLayer {
+                                scaleX = scaleFactor
+                                scaleY = scaleFactor
+                                transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 0.5f)
+                                clip = true // safety net: content can never paint outside the sheet frame
+                            }
+                    ) {
+                        if (vm.isHtmlMode) {
+                            val html = remember(vm.htmlContent) {
+                                try {
+                                    context.assets.open("templates/${vm.htmlContent}").bufferedReader().use { it.readText() }
+                                } catch (e: Exception) {
+                                    "<html><body>Error loading template</body></html>"
+                                }
+                            }
+                            HtmlDesignCanvas(
+                                htmlContent = html,
+                                jsCommands = MutableStateFlow("").asSharedFlow(),
+                                captureRequest = vm.captureRequest,
+                                onCaptured = { vm.capturedBitmap = it },
+                                onElementSelected = {},
+                                onHtmlUpdated = {},
+                                forceDesktop = sheetSize.isDesktopPreview,
+                                viewportWidth = designWidth,
+                                onContentMeasured = { _, h -> measuredContentHeight = h },
+                                modifier = Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color.White)
+                            )
+                        } else {
+                            DesignCanvas(
+                                state = vm.canvasState,
+                                selectedId = null,
+                                onSelect = {},
+                                onDragStart = {},
+                                onElementMoved = { _, _, _ -> },
+                                onElementResized = { _, _, _ -> },
+                                aspectRatio = sheetSize.aspectRatio,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(20.dp))
+            Text("Sheet Size", style = TitleMd, color = VCOnSurface, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(10.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                com.brochurecraft.app.data.model.SheetSize.values().forEach { size ->
+                    val selected = size == vm.canvasState.sheetSize
+                    FilterChip(
+                        selected = selected,
+                        onClick = { vm.setSheetSize(size) },
+                        label = { Text(size.label) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = VCPrimary.copy(alpha = 0.1f),
+                            selectedLabelColor = VCPrimary
+                        )
+                    )
+                }
             }
 
             Spacer(Modifier.height(20.dp))
@@ -112,8 +211,12 @@ fun ExportShareScreen(designId: Long, onBack: () -> Unit) {
             Spacer(Modifier.height(10.dp))
             Button(
                 onClick = {
-                    val file = vm.export(context)
-                    context.startActivity(vm.shareIntent(context, file))
+                    if (vm.isHtmlMode) {
+                        vm.requestCapture()
+                    } else {
+                        val file = vm.export(context)
+                        context.startActivity(vm.shareIntent(context, file))
+                    }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = VCPrimary, contentColor = VCOnPrimary),
                 shape = RoundedCornerShape(24.dp),
@@ -129,20 +232,32 @@ fun ExportShareScreen(designId: Long, onBack: () -> Unit) {
             Spacer(Modifier.height(10.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 QuickShareIcon(Icons.Filled.Message) {
-                    val file = vm.export(context)
-                    context.startActivity(vm.shareIntent(context, file))
+                    if (vm.isHtmlMode) vm.requestCapture()
+                    else {
+                        val file = vm.export(context)
+                        context.startActivity(vm.shareIntent(context, file))
+                    }
                 }
                 QuickShareIcon(Icons.Filled.CameraAlt) {
-                    val file = vm.export(context)
-                    context.startActivity(vm.shareIntent(context, file))
+                    if (vm.isHtmlMode) vm.requestCapture()
+                    else {
+                        val file = vm.export(context)
+                        context.startActivity(vm.shareIntent(context, file))
+                    }
                 }
                 QuickShareIcon(Icons.Filled.Email) {
-                    val file = vm.export(context)
-                    context.startActivity(vm.shareIntent(context, file))
+                    if (vm.isHtmlMode) vm.requestCapture()
+                    else {
+                        val file = vm.export(context)
+                        context.startActivity(vm.shareIntent(context, file))
+                    }
                 }
                 QuickShareIcon(Icons.Filled.Link) {
-                    val file = vm.export(context)
-                    context.startActivity(vm.shareIntent(context, file))
+                    if (vm.isHtmlMode) vm.requestCapture()
+                    else {
+                        val file = vm.export(context)
+                        context.startActivity(vm.shareIntent(context, file))
+                    }
                 }
             }
             Spacer(Modifier.height(24.dp))

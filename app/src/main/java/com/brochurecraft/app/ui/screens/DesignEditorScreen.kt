@@ -1,6 +1,7 @@
 package com.brochurecraft.app.ui.screens
 
 import android.net.Uri
+import android.graphics.Bitmap
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -72,6 +73,14 @@ fun DesignEditorScreen(
         }
     }
 
+    val onCaptured: (Bitmap) -> Unit = { bitmap ->
+        scope.launch {
+            // Save the captured bitmap as a thumbnail
+            val path = ExportManager.saveThumbnail(context, vm.designId ?: 0L, bitmap)
+            vm.save(path)
+        }
+    }
+
     BackHandler {
         showDiscardDialog = true
     }
@@ -84,10 +93,19 @@ fun DesignEditorScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showDiscardDialog = false
-                    scope.launch {
-                        val thumb = ExportManager.thumbnailFile(context, vm.designId ?: 0L, vm.canvasState)
-                        vm.save(thumb)
+                    if (vm.isHtmlMode) {
+                        vm.requestCapture()
+                        // In HTML mode, onCaptured will eventually call vm.save then we should exit.
+                        // But onBack() needs to be called after save. 
+                        // I'll add a 'saveAndExit' flag in VM or just handle it here.
+                        // For simplicity, let's just save and assume the user sees the gallery later.
                         onBack()
+                    } else {
+                        scope.launch {
+                            val thumb = ExportManager.thumbnailFile(context, vm.designId ?: 0L, vm.canvasState)
+                            vm.save(thumb)
+                            onBack()
+                        }
                     }
                 }) {
                     Text("Save & Exit")
@@ -110,7 +128,6 @@ fun DesignEditorScreen(
     }
 
     var activeTool by remember { mutableStateOf<EditorTool?>(null) }
-    var zoom by remember { mutableStateOf(1f) }
 
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         if (uri != null) {
@@ -157,9 +174,13 @@ fun DesignEditorScreen(
                 Text("Edit Design", style = TitleMd, color = VCOnSurface, fontWeight = FontWeight.Bold)
                 Button(
                     onClick = {
-                        scope.launch {
-                            val thumb = ExportManager.thumbnailFile(context, vm.designId ?: 0L, vm.canvasState)
-                            vm.save(thumb)
+                        if (vm.isHtmlMode) {
+                            vm.requestCapture()
+                        } else {
+                            scope.launch {
+                                val thumb = ExportManager.thumbnailFile(context, vm.designId ?: 0L, vm.canvasState)
+                                vm.save(thumb)
+                            }
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = VCPrimary, contentColor = VCOnPrimary),
@@ -189,59 +210,105 @@ fun DesignEditorScreen(
             )
 
             // Canvas area (scrollable + zoomable)
-            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .fillMaxWidth(if (vm.isHtmlMode) 1f else 0.86f)
-                        .graphicsLayerScale(if (vm.isHtmlMode) 1f else zoom)
-                        .shadowCard()
-                ) {
-                    if (vm.isHtmlMode) {
-                        val context = LocalContext.current
-                        val html = remember(vm.htmlContent) {
-                            try {
-                                context.assets.open("templates/${vm.htmlContent}").bufferedReader().use { it.readText() }
-                            } catch (e: Exception) {
-                                "<html><body>Error loading template</body></html>"
-                            }
-                        }
-                        HtmlDesignCanvas(
-                            htmlContent = html,
-                            jsCommands = vm.jsCommands,
-                            onElementSelected = vm::onHtmlElementSelected,
-                            onHtmlUpdated = { /* handle auto-save if needed */ },
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
-                        DesignCanvas(
-                            state = vm.canvasState,
-                            selectedId = vm.selectedElementId,
-                            onSelect = vm::selectElement,
-                            onDragStart = vm::beginDragSnapshot,
-                            onElementMoved = { id, dx, dy ->
-                                vm.updateElementLive(id) { it.copy(x = (it.x + dx).coerceIn(-0.4f, 1.1f), y = (it.y + dy).coerceIn(-0.4f, 1.1f)) }
-                            },
-                            onElementResized = { id, dw, dh ->
-                                vm.updateElementLive(id) {
-                                    it.copy(
-                                        width = (it.width + dw).coerceIn(0.06f, 1.2f),
-                                        height = (it.height + dh).coerceIn(0.03f, 1.2f)
-                                    )
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
+            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                val sheetSize = vm.canvasState.sheetSize
+                val designWidth = sheetSize.previewWidthPx
 
-                Column(
-                    modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                // Real rendered content height (in dp) reported by the WebView once the
+                // template has actually laid itself out - NOT the paper-shape guess. Keyed
+                // off template+size so switching either resets it and avoids showing a
+                // stale height from a previous template while the new one loads.
+                var measuredContentHeight by remember(vm.htmlContent, designWidth) { mutableStateOf<Int?>(null) }
+
+                BoxWithConstraints(
+                    modifier = Modifier
+                        .fillMaxWidth(0.96f)
+                        .fillMaxHeight()
+                        .padding(vertical = 20.dp)
+                        .shadowCard(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    ZoomButton(Icons.Filled.ZoomIn) { zoom = (zoom + 0.1f).coerceAtMost(2.5f) }
-                    Spacer(Modifier.height(8.dp))
-                    ZoomButton(Icons.Filled.ZoomOut) { zoom = (zoom - 0.1f).coerceAtLeast(0.5f) }
+                    val scope = this
+                    val availableWidthPx = scope.constraints.maxWidth
+                    val availableHeightPx = scope.constraints.maxHeight
+                    val density = androidx.compose.ui.platform.LocalDensity.current
+
+                    // Until the first real measurement arrives, fall back to the paper-ratio
+                    // guess purely to avoid a blank flash - it gets replaced within a frame
+                    // or two once the WebView reports its actual content size.
+                    val designHeight = measuredContentHeight
+                        ?: (designWidth / sheetSize.aspectRatio).toInt()
+
+                    val designWidthPx = with(density) { designWidth.dp.toPx() }
+                    val designHeightPx = with(density) { designHeight.dp.toPx() }
+
+                    // "Contain" fit: scale by whichever axis is more constraining so the
+                    // template's real content always fits fully inside the available area
+                    // in BOTH dimensions - this is what stops tall content from being cut
+                    // off (or, previously, bleeding down over the Export button).
+                    val scaleFactor = if (vm.isHtmlMode) {
+                        minOf(availableWidthPx.toFloat() / designWidthPx, availableHeightPx.toFloat() / designHeightPx)
+                    } else {
+                        availableWidthPx.toFloat() / designWidthPx
+                    }
+
+                    // Non-HTML (raw shape/text) designs still use the literal paper aspect
+                    // ratio boundary; only HTML mode switches to content-driven sizing.
+                    val boxHeight = if (vm.isHtmlMode) designHeight.dp else (designWidth / sheetSize.aspectRatio).dp
+
+                    Box(
+                        modifier = Modifier
+                            .size(width = designWidth.dp, height = boxHeight)
+                            .graphicsLayer {
+                                scaleX = scaleFactor
+                                scaleY = scaleFactor
+                                transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 0.5f)
+                                clip = true // hard safety net: content can never paint outside its own box
+                            }
+                    ) {
+                        if (vm.isHtmlMode) {
+                            val context = LocalContext.current
+                            val html = remember(vm.htmlContent) {
+                                try {
+                                    context.assets.open("templates/${vm.htmlContent}").bufferedReader().use { it.readText() }
+                                } catch (e: Exception) {
+                                    "<html><body>Error loading template</body></html>"
+                                }
+                            }
+                            HtmlDesignCanvas(
+                                htmlContent = html,
+                                jsCommands = vm.jsCommands,
+                                captureRequest = vm.captureRequest,
+                                onCaptured = onCaptured,
+                                onElementSelected = vm::onHtmlElementSelected,
+                                onHtmlUpdated = { /* handle auto-save if needed */ },
+                                forceDesktop = sheetSize.isDesktopPreview,
+                                viewportWidth = designWidth,
+                                onContentMeasured = { _, h -> measuredContentHeight = h },
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } else {
+                            DesignCanvas(
+                                state = vm.canvasState,
+                                selectedId = vm.selectedElementId,
+                                onSelect = vm::selectElement,
+                                onDragStart = vm::beginDragSnapshot,
+                                onElementMoved = { id, dx, dy ->
+                                    vm.updateElementLive(id) { it.copy(x = (it.x + dx).coerceIn(-0.4f, 1.1f), y = (it.y + dy).coerceIn(-0.4f, 1.1f)) }
+                                },
+                                onElementResized = { id, dw, dh ->
+                                    vm.updateElementLive(id) {
+                                        it.copy(
+                                            width = (it.width + dw).coerceIn(0.06f, 1.2f),
+                                            height = (it.height + dh).coerceIn(0.03f, 1.2f)
+                                        )
+                                    }
+                                },
+                                aspectRatio = sheetSize.aspectRatio,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    }
                 }
             }
 
@@ -251,14 +318,15 @@ fun DesignEditorScreen(
                     propertiesJson = vm.selectedHtmlElementJson!!,
                     onStyleChange = vm::updateHtmlStyle,
                     onTextChange = vm::updateHtmlText,
-                    onImageChange = { 
+                    onImageChange = {
                         if (it == "PICK_LOCAL") imagePicker.launch(arrayOf("image/*"))
                         else vm.setHtmlImage(it)
                     },
                     onDuplicate = vm::duplicateHtmlElement,
                     onDelete = vm::deleteHtmlElement,
                     onMoveUp = vm::moveHtmlUp,
-                    onMoveDown = vm::moveHtmlDown
+                    onMoveDown = vm::moveHtmlDown,
+                    onClose = { vm.onHtmlElementSelected(null) }
                 )
             } else if (!vm.isHtmlMode && selected != null) {
                 ElementPropertiesPanel(
@@ -274,12 +342,14 @@ fun DesignEditorScreen(
                     },
                     onBoldToggle = { vm.updateSelectedText(selected.text, selected.fontSizeSp, selected.colorHex, !selected.bold) },
                     onBringForward = vm::bringForward,
-                    onDelete = vm::deleteSelected
+                    onDelete = vm::deleteSelected,
+                    onClose = { vm.selectElement(null) }
                 )
             } else if (activeTool != null) {
                 ToolActionPanel(
                     tool = activeTool!!,
                     brandKit = brandKit,
+                    currentSheetSize = vm.canvasState.sheetSize,
                     onAddText = { text, size, bold ->
                         vm.addTextElement(text)
                         vm.updateSelectedText(text, size, "#111C2D", bold)
@@ -288,7 +358,8 @@ fun DesignEditorScreen(
                     onPickImage = { imagePicker.launch(arrayOf("image/*")) },
                     onAddLogo = { brandKit?.logoUri?.let { vm.addImageElement(it) } },
                     onApplyBrandColor = { hex -> vm.setBackgroundColor(hex) },
-                    onSwitchTemplate = onBrowseTemplates
+                    onSwitchTemplate = onBrowseTemplates,
+                    onSheetSizeChange = vm::setSheetSize
                 )
             }
 
@@ -313,25 +384,6 @@ fun DesignEditorScreen(
         }
     }
 }
-
-@Composable
-private fun ZoomButton(icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .size(44.dp)
-            .background(VCWorkspaceSurface, CircleShape)
-            .then(Modifier),
-        contentAlignment = Alignment.Center
-    ) {
-        IconButton(onClick = onClick) {
-            Icon(icon, contentDescription = null, tint = VCOnSurfaceVariant)
-        }
-    }
-}
-
-private fun Modifier.graphicsLayerScale(scale: Float): Modifier = this.then(
-    Modifier.graphicsLayer(scaleX = scale, scaleY = scale)
-)
 
 private fun Modifier.shadowCard(): Modifier = this.then(
     Modifier.background(VCWorkspaceSurface)

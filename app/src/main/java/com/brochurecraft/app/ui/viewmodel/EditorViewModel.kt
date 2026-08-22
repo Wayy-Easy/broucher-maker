@@ -11,6 +11,7 @@ import com.brochurecraft.app.data.model.DesignElement
 import com.brochurecraft.app.data.model.DesignJson
 import com.brochurecraft.app.data.model.ElementType
 import com.brochurecraft.app.data.model.ShapeKind
+import com.brochurecraft.app.data.model.SheetSize
 import com.brochurecraft.app.data.repository.DesignRepository
 import com.brochurecraft.app.data.repository.TemplateRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,6 +37,9 @@ class EditorViewModel(
 
     private val _jsCommands = MutableSharedFlow<String>(extraBufferCapacity = 10)
     val jsCommands: SharedFlow<String> = _jsCommands.asSharedFlow()
+
+    private val _captureRequest = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val captureRequest: SharedFlow<Unit> = _captureRequest.asSharedFlow()
 
     var designId: Long? = null
         private set
@@ -249,9 +253,18 @@ class EditorViewModel(
         )
     }
 
+    fun requestCapture() {
+        viewModelScope.launch { _captureRequest.emit(Unit) }
+    }
+
     fun setBackgroundColor(hex: String) {
         pushUndo()
         canvasState = canvasState.copy(backgroundColorHex = hex)
+    }
+
+    fun setSheetSize(size: SheetSize) {
+        pushUndo()
+        canvasState = canvasState.copy(sheetSize = size)
     }
 
     fun selectedElement(): DesignElement? = canvasState.elements.find { it.id == selectedElementId }

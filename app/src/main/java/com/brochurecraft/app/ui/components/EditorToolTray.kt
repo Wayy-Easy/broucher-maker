@@ -21,8 +21,12 @@ import com.brochurecraft.app.ui.theme.VCPrimary
 import com.brochurecraft.app.ui.theme.VCPrimaryContainer
 import com.brochurecraft.app.ui.theme.VCWorkspaceSurface
 
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+
 enum class EditorTool(val label: String, val icon: ImageVector) {
     TEMPLATES("Templates", Icons.Filled.GridView),
+    LAYOUT("Layout", Icons.Filled.AspectRatio),
     TEXT("Text", Icons.Filled.TextFields),
     IMAGES("Images", Icons.Filled.Image),
     ELEMENTS("Elements", Icons.Filled.Category),
@@ -34,10 +38,13 @@ fun EditorToolTray(selected: EditorTool?, onSelect: (EditorTool) -> Unit) {
     Column(modifier = Modifier.background(VCWorkspaceSurface)) {
         Divider(color = VCBorderSubtle)
         Row(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceAround
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(vertical = 8.dp, horizontal = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            EditorTool.values().forEach { tool ->
+            EditorTool.entries.forEach { tool ->
                 val isSelected = tool == selected
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,

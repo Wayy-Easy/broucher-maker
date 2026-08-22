@@ -20,6 +20,7 @@ import com.brochurecraft.app.data.model.DesignElement
 import com.brochurecraft.app.data.model.ElementType
 import com.brochurecraft.app.data.model.HtmlElementProperties
 import com.brochurecraft.app.data.model.ShapeKind
+import com.brochurecraft.app.data.model.SheetSize
 import com.brochurecraft.app.ui.theme.*
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -34,7 +35,8 @@ fun ElementPropertiesPanel(
     onColorChange: (String) -> Unit,
     onBoldToggle: () -> Unit,
     onBringForward: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onClose: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -51,6 +53,7 @@ fun ElementPropertiesPanel(
             Row {
                 IconButton(onClick = onBringForward) { Icon(Icons.Filled.FlipToFront, contentDescription = "Bring forward", tint = VCOnSurfaceVariant) }
                 IconButton(onClick = onDelete) { Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = VCError) }
+                IconButton(onClick = onClose) { Icon(Icons.Filled.Close, contentDescription = "Close", tint = VCOnSurfaceVariant) }
             }
         }
 
@@ -110,7 +113,8 @@ fun HtmlElementPropertiesPanel(
     onDuplicate: () -> Unit,
     onDelete: () -> Unit,
     onMoveUp: () -> Unit,
-    onMoveDown: () -> Unit
+    onMoveDown: () -> Unit,
+    onClose: () -> Unit
 ) {
     val props = remember(propertiesJson) {
         try {
@@ -137,6 +141,7 @@ fun HtmlElementPropertiesPanel(
                 IconButton(onClick = onMoveDown) { Icon(Icons.Filled.ArrowDownward, contentDescription = "Move Down", tint = VCOnSurfaceVariant) }
                 IconButton(onClick = onDuplicate) { Icon(Icons.Filled.ContentCopy, contentDescription = "Duplicate", tint = VCOnSurfaceVariant) }
                 IconButton(onClick = onDelete) { Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = VCError) }
+                IconButton(onClick = onClose) { Icon(Icons.Filled.Close, contentDescription = "Close", tint = VCOnSurfaceVariant) }
             }
         }
 
@@ -225,12 +230,14 @@ fun HtmlElementPropertiesPanel(
 fun ToolActionPanel(
     tool: EditorTool,
     brandKit: BrandKitEntity?,
+    currentSheetSize: SheetSize = SheetSize.A4,
     onAddText: (String, Float, Boolean) -> Unit,
     onAddShape: (ShapeKind) -> Unit,
     onPickImage: () -> Unit,
     onAddLogo: () -> Unit,
     onApplyBrandColor: (String) -> Unit,
-    onSwitchTemplate: () -> Unit
+    onSwitchTemplate: () -> Unit,
+    onSheetSizeChange: (SheetSize) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -239,6 +246,34 @@ fun ToolActionPanel(
             .padding(14.dp)
     ) {
         when (tool) {
+            EditorTool.TEMPLATES -> {
+                Text("Templates", style = TitleMd, color = VCOnSurface)
+                Spacer(Modifier.height(10.dp))
+                OutlinedButton(onClick = onSwitchTemplate, shape = RoundedCornerShape(24.dp)) {
+                    Text("Browse template gallery")
+                }
+            }
+            EditorTool.LAYOUT -> {
+                Text("Sheet Size", style = TitleMd, color = VCOnSurface)
+                Spacer(Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    SheetSize.values().forEach { size ->
+                        val selected = size == currentSheetSize
+                        FilterChip(
+                            selected = selected,
+                            onClick = { onSheetSizeChange(size) },
+                            label = { Text(size.label) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = VCPrimary.copy(alpha = 0.1f),
+                                selectedLabelColor = VCPrimary
+                            )
+                        )
+                    }
+                }
+            }
             EditorTool.TEXT -> {
                 Text("Add Text", style = TitleMd, color = VCOnSurface)
                 Spacer(Modifier.height(10.dp))
@@ -296,13 +331,6 @@ fun ToolActionPanel(
                                 .clickable { onApplyBrandColor(hex) }
                         )
                     }
-                }
-            }
-            EditorTool.TEMPLATES -> {
-                Text("Templates", style = TitleMd, color = VCOnSurface)
-                Spacer(Modifier.height(10.dp))
-                OutlinedButton(onClick = onSwitchTemplate, shape = RoundedCornerShape(24.dp)) {
-                    Text("Browse template gallery")
                 }
             }
         }

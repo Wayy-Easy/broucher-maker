@@ -9,6 +9,30 @@ enum class ElementType { TEXT, IMAGE, SHAPE }
 enum class ShapeKind { RECTANGLE, CIRCLE, LINE }
 
 /**
+ * @param previewWidthPx The CSS/layout width (in px == dp in our WebView setup) that the
+ *   HTML template should be rendered at for this size. This is the single source of truth
+ *   consumed by both the editor canvas and the export preview so a given [SheetSize] always
+ *   renders identically in both places. Distinct values are required for each entry so that
+ *   switching sizes visibly triggers the template's responsive breakpoints.
+ * @param isDesktopPreview When true, the WebView emulates a desktop browser (desktop user
+ *   agent) instead of a mobile one. Only "Desktop" should set this.
+ */
+@Serializable
+enum class SheetSize(
+    val label: String,
+    val aspectRatio: Float,
+    val previewWidthPx: Int,
+    val isDesktopPreview: Boolean = false
+) {
+    A5("A5", 1f / 1.414f, 640),
+    A4("A4", 1f / 1.414f, 900),
+    A3("A3", 1f / 1.414f, 1200),
+    MOBILE("Mobile", 9f / 16f, 420),
+    TABLET("Tablet", 3f / 4f, 800),
+    DESKTOP("Desktop", 16f / 9f, 1440, isDesktopPreview = true)
+}
+
+/**
  * A single element placed on the design canvas (text box, image, or shape).
  * Position/size are stored as fractions (0f..1f) of the canvas so designs
  * remain resolution independent between the editor preview and export.
@@ -43,7 +67,8 @@ data class DesignElement(
 data class DesignCanvasState(
     val elements: List<DesignElement> = emptyList(),
     val backgroundColorHex: String = "#FFFFFF",
-    val backgroundImageUri: String? = null
+    val backgroundImageUri: String? = null,
+    val sheetSize: SheetSize = SheetSize.A4
 )
 
 @Serializable
