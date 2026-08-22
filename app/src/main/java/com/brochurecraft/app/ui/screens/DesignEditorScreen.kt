@@ -16,6 +16,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -124,6 +126,7 @@ fun DesignEditorScreen(
 
     var activeTool by remember { mutableStateOf<EditorTool?>(null) }
     var zoomScale by remember { mutableStateOf(1f) }
+    var zoomOffset by remember { mutableStateOf(Offset.Zero) }
 
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         if (uri != null) {
@@ -211,10 +214,15 @@ fun DesignEditorScreen(
                     .weight(1f)
                     .fillMaxWidth()
                     .pointerInput(Unit) {
-                        detectTransformGestures { _, _, zoom, _ ->
+                        detectTransformGestures { centroid, pan, zoom, _ ->
+                            val oldScale = zoomScale
                             zoomScale = (zoomScale * zoom).coerceIn(0.5f, 5f)
+                            
+                            // Zoom around centroid
+                            zoomOffset = (zoomOffset + centroid / oldScale) - (centroid / zoomScale + pan / zoomScale)
                         }
-                    },
+                    }
+                    .clipToBounds(),
                 contentAlignment = Alignment.Center
             ) {
                 val sheetSize = vm.canvasState.sheetSize
@@ -228,6 +236,8 @@ fun DesignEditorScreen(
                         .graphicsLayer {
                             scaleX = zoomScale
                             scaleY = zoomScale
+                            translationX = -zoomOffset.x * zoomScale
+                            translationY = -zoomOffset.y * zoomScale
                         }
                         .shadowCard(),
                     contentAlignment = Alignment.TopStart
@@ -358,7 +368,8 @@ fun DesignEditorScreen(
                     onAddLogo = { brandKit?.logoUri?.let { vm.addImageElement(it) } },
                     onApplyBrandColor = { hex -> vm.setBackgroundColor(hex) },
                     onSwitchTemplate = onBrowseTemplates,
-                    onSheetSizeChange = vm::setSheetSize
+                    onSheetSizeChange = vm::setSheetSize,
+                    onClose = { activeTool = null }
                 )
             }
 

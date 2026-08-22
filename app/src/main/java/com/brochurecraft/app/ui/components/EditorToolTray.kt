@@ -25,7 +25,6 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 
 enum class EditorTool(val label: String, val icon: ImageVector) {
-    TEMPLATES("Templates", Icons.Filled.GridView),
     LAYOUT("Layout", Icons.Filled.AspectRatio),
     TEXT("Text", Icons.Filled.TextFields),
     IMAGES("Images", Icons.Filled.Image),

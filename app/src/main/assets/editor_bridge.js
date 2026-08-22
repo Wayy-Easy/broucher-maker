@@ -1,10 +1,22 @@
 (function() {
     let selectedElement = null;
     let selectionOverlay = null;
+    let resizeHandle = null;
+
+    let isDragging = false;
+    let isResizing = false;
+    let startX, startY;
+    let startLeft, startTop, startWidth, startHeight;
 
     function init() {
         createSelectionOverlay();
         document.body.addEventListener('click', handleElementClick, true);
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+        document.addEventListener('touchmove', handleMouseMove, { passive: false });
+        document.addEventListener('touchend', handleMouseUp);
+
         setupMutationObserver();
         console.log("Editor bridge initialized");
 
@@ -16,35 +28,121 @@
 
     function createSelectionOverlay() {
         selectionOverlay = document.createElement('div');
+        selectionOverlay.className = 'bc-editor-overlay';
         selectionOverlay.style.position = 'absolute';
         selectionOverlay.style.border = '2px solid #4648D4';
-        selectionOverlay.style.pointerEvents = 'none';
         selectionOverlay.style.zIndex = '999999';
         selectionOverlay.style.display = 'none';
-        selectionOverlay.style.borderRadius = '2px';
-        selectionOverlay.style.boxShadow = '0 0 0 9999px rgba(0,0,0,0.05)';
+        selectionOverlay.style.cursor = 'move';
+        selectionOverlay.style.boxSizing = 'border-box';
+
+        // Touch/Mouse events for dragging
+        selectionOverlay.addEventListener('mousedown', startDrag);
+        selectionOverlay.addEventListener('touchstart', startDrag, { passive: false });
+
+        resizeHandle = document.createElement('div');
+        resizeHandle.style.position = 'absolute';
+        resizeHandle.style.width = '24px';
+        resizeHandle.style.height = '24px';
+        resizeHandle.style.backgroundColor = '#4648D4';
+        resizeHandle.style.right = '-12px';
+        resizeHandle.style.bottom = '-12px';
+        resizeHandle.style.borderRadius = '50%';
+        resizeHandle.style.cursor = 'nwse-resize';
+        resizeHandle.style.border = '2px solid white';
+
+        resizeHandle.addEventListener('mousedown', startResize);
+        resizeHandle.addEventListener('touchstart', startResize, { passive: false });
+
+        selectionOverlay.appendChild(resizeHandle);
         document.body.appendChild(selectionOverlay);
     }
 
+    function startDrag(e) {
+        if (isResizing) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        isDragging = true;
+        const touch = e.touches ? e.touches[0] : e;
+        startX = touch.clientX;
+        startY = touch.clientY;
+
+        const styles = window.getComputedStyle(selectedElement);
+        startLeft = parseInt(styles.left) || selectedElement.offsetLeft;
+        startTop = parseInt(styles.top) || selectedElement.offsetTop;
+
+        // Ensure element is positioned for dragging
+        if (styles.position === 'static') {
+            selectedElement.style.position = 'relative';
+        }
+    }
+
+    function startResize(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        isResizing = true;
+        const touch = e.touches ? e.touches[0] : e;
+        startX = touch.clientX;
+        startY = touch.clientY;
+
+        const styles = window.getComputedStyle(selectedElement);
+        startWidth = parseInt(styles.width);
+        startHeight = parseInt(styles.height);
+    }
+
+    function handleMouseMove(e) {
+        if (!isDragging && !isResizing) return;
+        if (e.cancelable) e.preventDefault();
+
+        const touch = e.touches ? e.touches[0] : e;
+        const dx = touch.clientX - startX;
+        const dy = touch.clientY - startY;
+
+        if (isDragging) {
+            selectedElement.style.left = (startLeft + dx) + 'px';
+            selectedElement.style.top = (startTop + dy) + 'px';
+        } else if (isResizing) {
+            selectedElement.style.width = Math.max(20, startWidth + dx) + 'px';
+            selectedElement.style.height = Math.max(20, startHeight + dy) + 'px';
+        }
+
+        updateSelectionOverlay();
+    }
+
+    function handleMouseUp() {
+        if (isDragging || isResizing) {
+            isDragging = false;
+            isResizing = false;
+            reportChange();
+        }
+    }
+
     function handleElementClick(e) {
+        // If we clicked the overlay or its handle, don't change selection
+        if (e.target === selectionOverlay || e.target === resizeHandle) {
+            return;
+        }
+
         // If we are clicking a text element that is already selected and focused,
         // let the event pass through to allow caret movement/typing.
         if (selectedElement && selectedElement === e.target && selectedElement.contentEditable === "true") {
             return;
         }
 
-        e.preventDefault();
-        e.stopPropagation();
-
         let target = e.target;
 
-        // Don't select the overlay itself or the body/html
+        // Don't select the body/html
         if (target === document.body || target === document.documentElement) {
             deselect();
             return;
         }
 
         selectElement(target);
+
+        e.preventDefault();
+        e.stopPropagation();
     }
 
     function selectElement(el) {

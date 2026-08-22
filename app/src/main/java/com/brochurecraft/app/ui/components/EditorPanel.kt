@@ -12,8 +12,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,6 +41,11 @@ fun ElementPropertiesPanel(
     onDelete: () -> Unit,
     onClose: () -> Unit
 ) {
+    var draftText by remember(element.id) { mutableStateOf(element.text) }
+    var draftFontSize by remember(element.id) { mutableStateOf(element.fontSizeSp) }
+    var draftColor by remember(element.id) { mutableStateOf(element.colorHex) }
+    var draftBold by remember(element.id) { mutableStateOf(element.bold) }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -64,24 +68,24 @@ fun ElementPropertiesPanel(
         if (element.type == ElementType.TEXT) {
             Spacer(Modifier.height(8.dp))
             OutlinedTextField(
-                value = element.text,
-                onValueChange = onTextChange,
+                value = draftText,
+                onValueChange = { draftText = it },
                 label = { Text("Text") },
                 modifier = Modifier.fillMaxWidth(),
                 maxLines = 3
             )
             Spacer(Modifier.height(10.dp))
-            Text("Font size: ${element.fontSizeSp.toInt()}sp", style = BodySm, color = VCOnSurfaceVariant)
+            Text("Font size: ${draftFontSize.toInt()}sp", style = BodySm, color = VCOnSurfaceVariant)
             Slider(
-                value = element.fontSizeSp,
-                onValueChange = onFontSizeChange,
+                value = draftFontSize,
+                onValueChange = { draftFontSize = it },
                 valueRange = 10f..48f,
                 colors = SliderDefaults.colors(thumbColor = VCPrimary, activeTrackColor = VCPrimary)
             )
             Spacer(Modifier.height(4.dp))
             AssistChip(
-                onClick = onBoldToggle,
-                label = { Text(if (element.bold) "Bold: On" else "Bold: Off") }
+                onClick = { draftBold = !draftBold },
+                label = { Text(if (draftBold) "Bold: On" else "Bold: Off") }
             )
             Spacer(Modifier.height(10.dp))
         }
@@ -90,8 +94,7 @@ fun ElementPropertiesPanel(
         Spacer(Modifier.height(6.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             quickColors.forEach { hex ->
-                val isActive = (element.type == ElementType.TEXT && element.colorHex == hex) ||
-                    (element.type != ElementType.TEXT && element.fillColorHex == hex)
+                val isActive = draftColor == hex
                 Box(
                     modifier = Modifier
                         .size(28.dp)
@@ -101,8 +104,36 @@ fun ElementPropertiesPanel(
                             color = if (isActive) VCPrimary else VCBorderSubtle,
                             shape = CircleShape
                         )
-                        .clickable { onColorChange(hex) }
+                        .clickable { draftColor = hex }
                 )
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            OutlinedButton(
+                onClick = onClose,
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                Text("Cancel")
+            }
+            Button(
+                onClick = {
+                    onTextChange(draftText)
+                    onFontSizeChange(draftFontSize)
+                    onColorChange(draftColor)
+                    if (draftBold != element.bold) onBoldToggle()
+                    onClose()
+                },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(24.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = VCPrimary)
+            ) {
+                Text("Okay")
             }
         }
     }
@@ -127,6 +158,11 @@ fun HtmlElementPropertiesPanel(
             null
         }
     } ?: return
+
+    var draftText by remember(propertiesJson) { mutableStateOf(props.text ?: "") }
+    var draftSrc by remember(propertiesJson) { mutableStateOf(props.src ?: "") }
+    var draftColor by remember(propertiesJson) { mutableStateOf(props.color ?: "#000000") }
+    var draftBgColor by remember(propertiesJson) { mutableStateOf(props.backgroundColor ?: "transparent") }
 
     Column(
         modifier = Modifier
@@ -153,8 +189,8 @@ fun HtmlElementPropertiesPanel(
 
         if (props.text != null) {
             OutlinedTextField(
-                value = props.text,
-                onValueChange = onTextChange,
+                value = draftText,
+                onValueChange = { draftText = it },
                 label = { Text("Content") },
                 modifier = Modifier.fillMaxWidth(),
                 maxLines = 3
@@ -176,14 +212,6 @@ fun HtmlElementPropertiesPanel(
                     Spacer(Modifier.width(6.dp))
                     Text("Upload")
                 }
-                
-                OutlinedButton(
-                    onClick = { /* Could open a dialog for URL input */ },
-                    shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Paste URL")
-                }
             }
             Spacer(Modifier.height(12.dp))
             
@@ -197,7 +225,7 @@ fun HtmlElementPropertiesPanel(
 
         Text("Colors", style = BodySm, color = VCOnSurfaceVariant)
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-             val quickColors = listOf("#111C2D", "#4648D4", "#B4136D", "#006C49", "#F59E0B", "#BA1A1A", "#FFFFFF")
+            val quickColors = listOf("#111C2D", "#4648D4", "#B4136D", "#006C49", "#F59E0B", "#BA1A1A", "#FFFFFF")
             quickColors.forEach { hex ->
                 Box(
                     modifier = Modifier
@@ -206,9 +234,9 @@ fun HtmlElementPropertiesPanel(
                         .border(1.dp, VCBorderSubtle, CircleShape)
                         .clickable { 
                             if (props.tagName == "IMG" || (props.backgroundColor != null && props.backgroundColor != "rgba(0, 0, 0, 0)" && props.backgroundColor != "#00000000")) {
-                                onStyleChange("backgroundColor", hex)
+                                draftBgColor = hex
                             } else {
-                                onStyleChange("color", hex)
+                                draftColor = hex
                             }
                         }
                 )
@@ -227,6 +255,33 @@ fun HtmlElementPropertiesPanel(
                  label = { Text("Italic") }
              )
         }
+
+        Spacer(Modifier.height(16.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            OutlinedButton(
+                onClick = onClose,
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                Text("Cancel")
+            }
+            Button(
+                onClick = {
+                    if (props.text != null) onTextChange(draftText)
+                    if (draftColor != props.color) onStyleChange("color", draftColor)
+                    if (draftBgColor != props.backgroundColor) onStyleChange("backgroundColor", draftBgColor)
+                    onClose()
+                },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(24.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = VCPrimary)
+            ) {
+                Text("Okay")
+            }
+        }
     }
 }
 
@@ -241,7 +296,8 @@ fun ToolActionPanel(
     onAddLogo: () -> Unit,
     onApplyBrandColor: (String) -> Unit,
     onSwitchTemplate: () -> Unit,
-    onSheetSizeChange: (SheetSize) -> Unit
+    onSheetSizeChange: (SheetSize) -> Unit,
+    onClose: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -251,17 +307,26 @@ fun ToolActionPanel(
             .verticalScroll(rememberScrollState())
             .padding(14.dp)
     ) {
-        when (tool) {
-            EditorTool.TEMPLATES -> {
-                Text("Templates", style = TitleMd, color = VCOnSurface)
-                Spacer(Modifier.height(10.dp))
-                OutlinedButton(onClick = onSwitchTemplate, shape = RoundedCornerShape(24.dp)) {
-                    Text("Browse template gallery")
-                }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val title = when (tool) {
+                EditorTool.LAYOUT -> "Sheet Size"
+                EditorTool.TEXT -> "Add Text"
+                EditorTool.IMAGES -> "Images"
+                EditorTool.ELEMENTS -> "Shapes"
+                EditorTool.BRAND -> "Brand Kit"
             }
+            Text(title, style = TitleMd, color = VCOnSurface)
+            IconButton(onClick = onClose) { Icon(Icons.Filled.Close, contentDescription = "Close", tint = VCOnSurfaceVariant) }
+        }
+        
+        Spacer(Modifier.height(8.dp))
+
+        when (tool) {
             EditorTool.LAYOUT -> {
-                Text("Sheet Size", style = TitleMd, color = VCOnSurface)
-                Spacer(Modifier.height(8.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -284,8 +349,6 @@ fun ToolActionPanel(
                 }
             }
             EditorTool.TEXT -> {
-                Text("Add Text", style = TitleMd, color = VCOnSurface)
-                Spacer(Modifier.height(10.dp))
                 Row(
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -296,8 +359,6 @@ fun ToolActionPanel(
                 }
             }
             EditorTool.IMAGES -> {
-                Text("Images", style = TitleMd, color = VCOnSurface)
-                Spacer(Modifier.height(10.dp))
                 Button(
                     onClick = onPickImage,
                     colors = ButtonDefaults.buttonColors(containerColor = VCPrimary, contentColor = VCOnPrimary),
@@ -309,8 +370,6 @@ fun ToolActionPanel(
                 }
             }
             EditorTool.ELEMENTS -> {
-                Text("Shapes", style = TitleMd, color = VCOnSurface)
-                Spacer(Modifier.height(10.dp))
                 Row(
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -321,8 +380,6 @@ fun ToolActionPanel(
                 }
             }
             EditorTool.BRAND -> {
-                Text("Brand Kit", style = TitleMd, color = VCOnSurface)
-                Spacer(Modifier.height(10.dp))
                 if (brandKit?.logoUri != null) {
                     OutlinedButton(onClick = onAddLogo, shape = RoundedCornerShape(24.dp)) {
                         Icon(Icons.Filled.Image, contentDescription = null, modifier = Modifier.size(16.dp))
